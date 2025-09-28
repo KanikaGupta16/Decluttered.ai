@@ -1,0 +1,30 @@
+{
+  "user_id": "demo_user_12345",
+  "data_type": "marketplace_summary",
+  "analytics": {
+    "active_listings": 5,
+    "total_inquiries": 47,
+    "total_messages": 23,
+    "avg_response_time": "2.3 hours",
+    "conversion_rate": "68%",
+    "revenue_this_month": 1299.99,
+    "top_performing_items": [
+      {
+        "name": "iPhone 13 Pro",
+        "inquiries": 12,
+        "price": 749
+      },
+      {
+        "name": "MacBook Air M2",
+        "inquiries": 8,
+        "price": 999
+      },
+      {
+        "name": "AirPods Pro",
+        "inquiries": 6,
+        "price": 189
+      }
+    ]
+  },
+  "created_at": "2025-09-28T09:00:25.322216"
+}

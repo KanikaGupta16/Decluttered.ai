@@ -1,0 +1,10 @@
+version: "2"
+authtoken: 2vMwqeotLoiVXRC3r2PNoyOM6Tg_5VvorX7t79CbWbHi547Zp
+
+tunnels:
+  image-api:
+    proto: http
+    addr: 3001
+  ebay-api:
+    proto: http
+    addr: 3004

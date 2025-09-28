@@ -121,4 +121,110 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node.js dependencies and build files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+/.next/
+/out/
+/build
+/dist
+
+# Next.js
+.next
+out
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Chrome profiles and browser data
+chrome_profile*/
+**/chrome_profile*/
+temp_profile*/
+**/temp_profile*/
+
+# Browser debug files
+chrome_debug.log
+DevToolsActivePort
+First Run
+Last Browser
+Last Version
+Local State
+Variations
+
+# Chrome extensions and cache
+*.pma
+*.db
+*.db-journal
+component_crx_cache/
+extensions_crx_cache/
+CrashpadMetrics*/
+BrowserMetrics*/
+
+# Model files (large binary files)
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+
+# Image captures and processed files
+captures/
+cropped_resellables/
+*.jpg
+*.jpeg
+*.png
+*.gif
+!public/*.png
+!public/*.jpg
+!public/*.jpeg
+!public/*.gif
+
+# API credentials and sensitive data
+credentials.json
+**/credentials.json
+api_keys.json
+secrets.json
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Analysis reports
+analysis_report_*.txt
