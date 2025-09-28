@@ -1,0 +1,46 @@
+# Decluttered.ai Requirements
+# Multi-Agent Decluttering System Dependencies
+
+# Core Framework
+uagents>=0.20.1                    # Fetch.ai autonomous agents framework
+
+# Computer Vision & AI
+ultralytics>=8.0.0                 # YOLOv9 object detection
+opencv-python>=4.8.0               # Camera operations and image processing
+Pillow>=10.0.0                     # Image manipulation and cropping
+
+# AI & API Integration
+google-generativeai>=0.3.0         # Gemini AI API client
+python-dotenv>=1.0.0              # Environment variable management
+
+# Data Processing
+numpy>=1.24.0                      # Numerical operations
+typing-extensions>=4.8.0           # Enhanced type hints
+
+# Optional: GPU Support (uncomment if using CUDA)
+# torch>=2.0.0                     # PyTorch for GPU acceleration
+# torchvision>=0.15.0              # Computer vision utilities
+# torchaudio>=2.0.0                # Audio processing (YOLO dependency)
+
+# Development Dependencies (optional)
+# pytest>=7.4.0                    # Testing framework
+# pytest-asyncio>=0.21.0           # Async testing support
+# black>=23.0.0                    # Code formatting
+# flake8>=6.0.0                    # Code linting
+# pre-commit>=3.0.0                # Git hooks
+
+# Monitoring & Logging (optional)
+# psutil>=5.9.0                    # System monitoring
+# memory-profiler>=0.61.0          # Memory usage profiling
+
+# Web API Dependencies
+fastapi>=0.100.0                   # Web API framework for file uploads
+uvicorn>=0.23.0                    # ASGI server for FastAPI
+aiofiles>=23.1.0                   # Async file operations
+aiohttp>=3.8.0                     # Async HTTP client
+
+# Production Dependencies (optional)
+# docker>=6.0.0                    # Docker integration
+
+# Note: Some packages may install additional dependencies automatically
+# Run: pip install -r requirements.txt
