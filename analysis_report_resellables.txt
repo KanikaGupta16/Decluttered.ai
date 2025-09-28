@@ -1,1 +1,17 @@
-No resellable objects were detected across all captures.
+--- Declutter Detector Analysis Report ---
+
+Capture: frame_1759021085.jpg
+  - New Resellable Objects: dining table
+  - Cropped Files: 1759021085_1_dining_table.jpg
+  - Location (First Item): XYXY (1, 816, 746, 1070)
+----------------------------------------
+Capture: frame_1759021086.jpg
+  - New Resellable Objects: laptop, chair, mouse, cell phone
+  - Cropped Files: 1759021086_1_laptop.jpg, 1759021086_2_chair.jpg, 1759021086_3_mouse.jpg, 1759021086_4_cell_phone.jpg
+  - Location (First Item): XYXY (10, 861, 320, 1077)
+----------------------------------------
+Capture: frame_1759021089.jpg
+  - New Resellable Objects: tv
+  - Cropped Files: 1759021089_1_tv.jpg
+  - Location (First Item): XYXY (257, 416, 511, 971)
+----------------------------------------

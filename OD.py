@@ -24,7 +24,8 @@ ANALYSIS_DURATION_SECONDS = 10
 CAMERA_INDEX = 0  
 REPORT_FILENAME = "analysis_report_resellables.txt"
 MAX_CAPTURES = 6 
-CAPTURE_COOLDOWN_SECONDS = 1.0 
+CAPTURE_COOLDOWN_SECONDS = 1.0
+CROP_BORDER_PERCENTAGE = 0.3  # 10% border around detected objects
 
 # Load the YOLOv9 Model once globally
 # yolov9c is chosen for balance. Change to yolov9s for speed or yolov9e for accuracy.
@@ -87,7 +88,7 @@ def write_analysis_report(results):
 
 def crop_and_save_image(original_img_path, coords, class_name, capture_ts, crop_index):
     """
-    Crops the original image using XYXY coordinates and saves it.
+    Crops the original image using XYXY coordinates with added border and saves it.
     
     Args:
         original_img_path (str): Path to the original JPEG.
@@ -98,8 +99,28 @@ def crop_and_save_image(original_img_path, coords, class_name, capture_ts, crop_
     """
     try:
         img = Image.open(original_img_path)
-        # Bounding box is defined as (left, top, right, bottom)
-        cropped_img = img.crop(coords) 
+        img_width, img_height = img.size
+        
+        # Extract original coordinates
+        x_min, y_min, x_max, y_max = coords
+        
+        # Calculate border size based on object dimensions
+        object_width = x_max - x_min
+        object_height = y_max - y_min
+        border_x = int(object_width * CROP_BORDER_PERCENTAGE)
+        border_y = int(object_height * CROP_BORDER_PERCENTAGE)
+        
+        # Expand coordinates with border, ensuring they stay within image bounds
+        new_x_min = max(0, x_min - border_x)
+        new_y_min = max(0, y_min - border_y)
+        new_x_max = min(img_width, x_max + border_x)
+        new_y_max = min(img_height, y_max + border_y)
+        
+        # Create new coordinates tuple
+        expanded_coords = (new_x_min, new_y_min, new_x_max, new_y_max)
+        
+        # Crop with expanded coordinates
+        cropped_img = img.crop(expanded_coords)
         
         # Create a descriptive filename for the cropped image
         safe_class_name = class_name.replace(" ", "_")
@@ -107,6 +128,10 @@ def crop_and_save_image(original_img_path, coords, class_name, capture_ts, crop_
         output_path = os.path.join(CROPPED_FOLDER, crop_filename)
         
         cropped_img.save(output_path)
+        
+        # Print border info for debugging
+        print(f"    [CROP] {class_name}: Original {coords} -> Expanded {expanded_coords} (border: {border_x}x{border_y})")
+        
         return output_path
         
     except Exception as e:
@@ -119,17 +144,51 @@ def crop_and_save_image(original_img_path, coords, class_name, capture_ts, crop_
 # from gemini_ACCESS import process_image_and_objects_for_resale, process_text_with_gemini
 # --- And ensure YOLO_MODEL is defined globally ---
 
+def calculate_bbox_area(coords):
+    """Calculate the area of a bounding box."""
+    x_min, y_min, x_max, y_max = coords
+    return (x_max - x_min) * (y_max - y_min)
+
+def select_largest_instances(all_detections):
+    """
+    For each object class, select only the instance with the largest bounding box area.
+    Returns a filtered dictionary with only the largest instances.
+    """
+    class_largest = {}  # class_name -> (coords, area)
+    
+    for coords, class_name in all_detections.items():
+        area = calculate_bbox_area(coords)
+        
+        if class_name not in class_largest:
+            class_largest[class_name] = (coords, area)
+        else:
+            current_coords, current_area = class_largest[class_name]
+            if area > current_area:
+                class_largest[class_name] = (coords, area)
+    
+    # Convert back to the original format
+    filtered_detections = {}
+    for class_name, (coords, area) in class_largest.items():
+        filtered_detections[coords] = class_name
+    
+    return filtered_detections
+
 def analyze_for_resellable_objects(folder):
     """
     Processes all captured images using YOLO for bounding boxes, sends the original image
     and the list of detected objects to Gemini for filtering, and then crops the images 
-    of confirmed resellable items.
+    of confirmed resellable items. Now includes deduplication across images and largest
+    instance selection within each image.
     """
     if not YOLO_MODEL:
         return []
 
-    print("\n[INFO] Starting YOLO detection and Gemini filtering pipeline...")
+    print("\n[INFO] Starting YOLO detection and Gemini filtering pipeline with deduplication...")
     final_report_entries = []
+    
+    # Global tracking for deduplication across all images
+    global_seen_objects = set()  # Track objects we've already processed
+    global_processed_objects = []  # Store all processed object info for final report
     
     # Get all captured images
     image_paths = sorted(glob.glob(os.path.join(folder, "*.jpg")))
@@ -164,9 +223,15 @@ def analyze_for_resellable_objects(folder):
             if not all_detections:
                 print("  [YOLO] No objects detected with sufficient confidence.")
                 continue
+            
+            # 1.5. Select largest instances for each object class within this image
+            filtered_detections = select_largest_instances(all_detections)
+            
+            if len(filtered_detections) != len(all_detections):
+                print(f"  [YOLO] Filtered to largest instances: {len(all_detections)} -> {len(filtered_detections)} objects")
                 
             # Prepare the list of UNIQUE object names for the Gemini prompt
-            unique_object_names = list(set(all_detections.values()))
+            unique_object_names = list(set(filtered_detections.values()))
             object_list_str = str(unique_object_names)
             print(f"  [YOLO] Detected unique objects ({len(unique_object_names)}): {object_list_str}")
 
@@ -188,46 +253,74 @@ def analyze_for_resellable_objects(folder):
             # Normalize names to lowercase for robust matching
             resellable_names_normalized = [name.lower() for name in resellable_names]
 
-
             if not resellable_names_normalized:
                 print("  [Gemini] No items identified as resellable.")
                 continue
 
             print(f"  [Gemini] Resellable items (YOLO names): {resellable_names}")
 
-            # 3. Cropping and Reporting
+            # 3. Deduplication and Cropping
             resellable_crops = []
             crop_index = 0
+            new_objects_this_image = []
             
-            for coords, class_name in all_detections.items():
+            for coords, class_name in filtered_detections.items():
                 # Check if the class name (normalized) is in Gemini's filtered list
                 if class_name.lower() in resellable_names_normalized:
-                    crop_index += 1
-                    # Use the cropping function to save the isolated image
-                    output_path = crop_and_save_image(filename, coords, class_name, ts, crop_index)
-                    
-                    if output_path:
-                        resellable_crops.append(os.path.basename(output_path))
+                    # Check if we've already seen this type of object
+                    if class_name.lower() not in global_seen_objects:
+                        # This is a new object type - process it
+                        global_seen_objects.add(class_name.lower())
+                        crop_index += 1
+                        
+                        # Use the cropping function to save the isolated image
+                        output_path = crop_and_save_image(filename, coords, class_name, ts, crop_index)
+                        
+                        if output_path:
+                            resellable_crops.append(os.path.basename(output_path))
+                            new_objects_this_image.append({
+                                'name': class_name,
+                                'coords': coords,
+                                'area': calculate_bbox_area(coords),
+                                'crop_file': os.path.basename(output_path)
+                            })
+                            print(f"    [NEW] Processing {class_name} (area: {calculate_bbox_area(coords)})")
+                    else:
+                        print(f"    [SKIP] {class_name} already processed in previous image")
             
-            # 4. Final Report Entry
-            if resellable_crops:
-                # Get the coordinates of the first detected resellable item for the report
-                first_coords = next(coords for coords, name in all_detections.items() if name.lower() in resellable_names_normalized)
-                
-                report_entry = (
-                    f"Capture: {os.path.basename(filename)}\n"
-                    f"  - Resellable Objects: {', '.join(resellable_names)}\n"
-                    f"  - Cropped Files: {', '.join(resellable_crops)}\n"
-                    f"  - Location (First Item): XYXY {first_coords}\n"
-                    f"{'-'*40}"
-                )
-                final_report_entries.append(report_entry)
+            # Store processed objects for final report
+            if new_objects_this_image:
+                global_processed_objects.append({
+                    'filename': os.path.basename(filename),
+                    'objects': new_objects_this_image
+                })
             
         except Exception as e:
             print(f"  [ERROR] Analysis pipeline failed for {filename}: {e}")
             final_report_entries.append(f"Capture: {os.path.basename(filename)} - Analysis Failed: {e}")
+    
+    # 4. Generate Final Report from Global Data
+    if global_processed_objects:
+        for image_data in global_processed_objects:
+            filename = image_data['filename']
+            objects = image_data['objects']
             
-    print("\n[INFO] Full pipeline analysis complete.")
+            object_names = [obj['name'] for obj in objects]
+            crop_files = [obj['crop_file'] for obj in objects]
+            first_coords = objects[0]['coords'] if objects else (0, 0, 0, 0)
+            
+            report_entry = (
+                f"Capture: {filename}\n"
+                f"  - New Resellable Objects: {', '.join(object_names)}\n"
+                f"  - Cropped Files: {', '.join(crop_files)}\n"
+                f"  - Location (First Item): XYXY {first_coords}\n"
+                f"{'-'*40}"
+            )
+            final_report_entries.append(report_entry)
+    
+    total_unique_objects = len(global_seen_objects)
+    print(f"\n[INFO] Deduplication Summary: {total_unique_objects} unique object types processed across all images")
+    print(f"[INFO] Full pipeline analysis complete.")
     return final_report_entries
 # --- Main Detection Logic ---
 
