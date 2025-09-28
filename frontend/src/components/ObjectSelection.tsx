@@ -165,7 +165,7 @@ const mapPipelineResultsToDetectedObjects = (results: any): DetectedObject[] => 
     let estimatedValue = 0;
     
     // First try pricing data from marketplace scraping
-    if (obj.estimated_value) {
+    if (obj.estimated_value && obj.estimated_value > 0) {
       estimatedValue = obj.estimated_value;
     } else if (obj.pricing_data) {
       // Calculate from pricing data if available
@@ -190,6 +190,34 @@ const mapPipelineResultsToDetectedObjects = (results: any): DetectedObject[] => 
       else if (googlePricing.current_prices && googlePricing.current_prices.length > 0) {
         const prices = googlePricing.current_prices;
         estimatedValue = prices.reduce((sum: number, p: any) => sum + p.price, 0) / prices.length;
+      }
+    }
+
+    // Final fallback: Estimate based on object type and confidence if no pricing found
+    if (!estimatedValue) {
+      const objectName = productName.toLowerCase();
+      const confidence = obj.confidence || 0.5;
+      
+      // Basic price estimates based on common items
+      if (objectName.includes('phone') || objectName.includes('iphone') || objectName.includes('samsung')) {
+        estimatedValue = Math.round(150 + (confidence * 200)); // $150-$350
+      } else if (objectName.includes('laptop') || objectName.includes('macbook') || objectName.includes('computer')) {
+        estimatedValue = Math.round(300 + (confidence * 700)); // $300-$1000
+      } else if (objectName.includes('keyboard')) {
+        estimatedValue = Math.round(25 + (confidence * 75)); // $25-$100
+      } else if (objectName.includes('mouse')) {
+        estimatedValue = Math.round(15 + (confidence * 35)); // $15-$50
+      } else if (objectName.includes('tablet') || objectName.includes('ipad')) {
+        estimatedValue = Math.round(100 + (confidence * 300)); // $100-$400
+      } else if (objectName.includes('watch') || objectName.includes('apple watch')) {
+        estimatedValue = Math.round(80 + (confidence * 220)); // $80-$300
+      } else if (objectName.includes('headphones') || objectName.includes('airpods')) {
+        estimatedValue = Math.round(30 + (confidence * 170)); // $30-$200
+      } else if (objectName.includes('speaker')) {
+        estimatedValue = Math.round(20 + (confidence * 80)); // $20-$100
+      } else {
+        // Generic fallback based on confidence
+        estimatedValue = Math.round(20 + (confidence * 80)); // $20-$100
       }
     }
 
