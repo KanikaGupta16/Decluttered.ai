@@ -12,6 +12,7 @@ import json
 import random
 import urllib.parse
 import statistics
+import threading
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from difflib import SequenceMatcher
@@ -32,9 +33,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # Gemini for semantic matching
 try:
-    from google import genai
+    import google.generativeai as genai
     GEMINI_AVAILABLE = True
-    print("✅ Gemini AI available for semantic matching")
+    print("✅ Gemini AI library available")
 except ImportError:
     GEMINI_AVAILABLE = False
     print("⚠️ Gemini AI not available - using basic string matching")
@@ -54,25 +55,30 @@ class MarketplaceScraper:
     def setup_gemini(self):
         """Initialize Gemini AI for semantic product matching using .env GEMINI_API_KEY only"""
         if not GEMINI_AVAILABLE:
+            print("⚠️ Gemini library not available - install with: pip install google-generativeai")
             return
 
         load_dotenv()
         key = os.getenv('GEMINI_API_KEY')
         if key and key.strip() and key != 'your_api_key_here':
             try:
-                self.gemini_client = genai.Client(api_key=key.strip())
-                # Test the model
-                test_response = self.gemini_client.models.generate_content(
-                    model="gemini-2.5-flash", contents="Test"
-                )
-                if test_response and hasattr(test_response, 'text'):
+                genai.configure(api_key=key.strip())
+                # Test with a simple model
+                model = genai.GenerativeModel('gemini-pro')
+                test_response = model.generate_content("Test")
+                
+                if test_response and test_response.text:
+                    self.gemini_model = model
                     print(f"✅ Gemini AI configured successfully: {key[:8]}...")
                     return
+                    
             except Exception as e:
-                print(f"⚠️ Gemini key failed {key[:8]}...: {e}")
+                print(f"⚠️ Gemini API key test failed {key[:8]}...: {e}")
+                print("💡 Make sure your GEMINI_API_KEY is valid in .env file")
                 return
 
-        print("⚠️ No working Gemini API key found - using basic string matching")
+        print("⚠️ No valid Gemini API key found - using basic string matching")
+        print("💡 Add GEMINI_API_KEY to .env file for better product matching")
     
     def start_browser(self, headless=False):
         """Start Chrome browser with optimal settings"""
@@ -782,6 +788,28 @@ Candidates:
                 'execution_time_ms': int((time.time() - start_time) * 1000)
             }
     
+    def start_facebook_message_monitoring(self):
+        """Start Facebook message monitoring in background thread"""
+        try:
+            from facebook_monitor import FacebookMessageMonitor
+            
+            print("🚀 Starting Facebook message monitoring...")
+            
+            monitor = FacebookMessageMonitor()
+            monitor.scraper = self  # Use this scraper's browser session
+            
+            # Start monitoring in background thread
+            monitor_thread = threading.Thread(target=monitor.start_monitoring)
+            monitor_thread.daemon = True  # Dies when main program exits
+            monitor_thread.start()
+            
+            print("✅ Facebook message monitor started in background")
+            return monitor
+            
+        except Exception as e:
+            print(f"❌ Failed to start message monitor: {e}")
+            return None
+    
     def close(self):
         """Clean up resources"""
         if self.driver:
@@ -934,6 +962,50 @@ def get_prices():
             'ok': False,
             'error_code': 'INTERNAL_ERROR',
             'message': 'Price search failed'
+        }), 500
+
+@app.route('/api/facebook/start-realtime-monitor', methods=['POST'])
+def start_realtime_facebook_monitor():
+    """Start real-time Facebook message monitoring"""
+    try:
+        from facebook_monitor import FacebookMessageMonitor
+        
+        monitor = FacebookMessageMonitor()
+        
+        if not monitor.scraper.ensure_facebook_access():
+            return jsonify({
+                'ok': False,
+                'error': 'Facebook login required'
+            }), 400
+        
+        # Start monitoring in background thread
+        import threading
+        def monitor_loop():
+            while True:
+                try:
+                    messages = monitor.check_facebook_inbox()
+                    if messages:
+                        for msg in messages:
+                            # Log to your database (you can implement this)
+                            print(f"📨 New message logged: {msg['buyer_name']} -> {msg['latest_message'][:50]}...")
+                    time.sleep(30)
+                except Exception as e:
+                    print(f"Monitor error: {e}")
+                    time.sleep(60)
+        
+        monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
+        monitor_thread.start()
+        
+        return jsonify({
+            'ok': True,
+            'message': 'Real-time Facebook monitoring started',
+            'check_interval': '30 seconds'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'ok': False,
+            'error': str(e)
         }), 500
 
 @app.route('/api/test', methods=['GET'])

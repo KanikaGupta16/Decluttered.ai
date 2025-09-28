@@ -13,6 +13,7 @@ import random
 import statistics
 import tempfile
 import base64
+import threading
 from datetime import datetime
 from typing import Dict, List, Optional
 from difflib import SequenceMatcher
@@ -1210,6 +1211,28 @@ Guidelines:
             'platforms_attempted': platforms
         }
     
+    def start_facebook_message_monitoring(self):
+        """Start Facebook message monitoring in background thread"""
+        try:
+            from facebook_monitor import FacebookMessageMonitor
+            
+            print("🚀 Starting Facebook message monitoring...")
+            
+            monitor = FacebookMessageMonitor()
+            monitor.lister = self  # Use this lister's browser session
+            
+            # Start monitoring in background thread
+            monitor_thread = threading.Thread(target=monitor.start_monitoring)
+            monitor_thread.daemon = True  # Dies when main program exits
+            monitor_thread.start()
+            
+            print("✅ Facebook message monitor started in background")
+            return monitor
+            
+        except Exception as e:
+            print(f"❌ Failed to start message monitor: {e}")
+            return None
+    
     def close(self):
         """Clean up resources"""
         if self.driver:
@@ -1421,6 +1444,41 @@ def create_ebay_listing_only():
             'error': str(e)
         }), 500
 
+@app.route('/api/facebook/start-monitoring', methods=['POST'])
+def start_facebook_monitoring():
+    """Start Facebook message monitoring"""
+    try:
+        # Use your existing lister instance
+        monitor = lister.start_facebook_message_monitoring()
+        
+        if monitor:
+            return jsonify({
+                'ok': True,
+                'message': 'Facebook message monitoring started',
+                'status': 'monitoring'
+            })
+        else:
+            return jsonify({
+                'ok': False,
+                'error': 'Failed to start monitoring'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'ok': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/facebook/monitor-status', methods=['GET'])
+def get_monitor_status():
+    """Get current monitoring status"""
+    # Simple status check
+    return jsonify({
+        'ok': True,
+        'status': 'running',  # You can make this more sophisticated
+        'last_check': datetime.now().isoformat()
+    })
+
 # === MAIN ===
 
 if __name__ == '__main__':
@@ -1431,6 +1489,8 @@ if __name__ == '__main__':
     print("📘 Facebook Only: POST /api/listings/facebook")  
     print("📙 eBay Only: POST /api/listings/ebay")
     print("🔐 FB Login: POST /api/facebook/login")
+    print("📱 Start Monitor: POST /api/facebook/start-monitoring")
+    print("📊 Monitor Status: GET /api/facebook/monitor-status")
     print("❤️  Health: GET /health")
     print()
     print("✨ Features:")
@@ -1440,11 +1500,13 @@ if __name__ == '__main__':
     print("  - Intelligent pricing based on market data")
     print("  - Anti-detection browser settings")
     print("  - Cookie-based login persistence")
+    print("  🆕 - Facebook message monitoring")
     print()
     print("⚙️  Setup:")
     print("  1. Add eBay API credentials to .env")
     print("  2. Run Facebook login on first use")
     print("  3. Integrate with image recognition & price scraper")
+    print("  4. Start Facebook message monitoring")
     print("🚀 Ready for hackathon!")
     
     try:

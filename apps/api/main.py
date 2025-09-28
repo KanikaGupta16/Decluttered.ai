@@ -355,11 +355,94 @@ class FastImageRecognitionAPI:
         
         return clean_title if len(clean_title) > 5 else None
     
+    def check_and_handle_related_search(self) -> bool:
+        """Check for 'Related search' section and click on it if main product info not found"""
+        try:
+            print("🔍 Checking for 'Related search' section...")
+            
+            # Look for "Related search" elements
+            related_search_selectors = [
+                '.GuCxbd [data-hveid] a.Kg0xqe',  # Your specific case
+                'div:contains("Related search") a',
+                '.kRdUPb + a',
+                '[data-hveid] a.sjVJQd',
+                'a.Kg0xqe.sjVJQd'
+            ]
+            
+            for selector in related_search_selectors:
+                try:
+                    if ':contains(' in selector:
+                        # Use XPath for text-based selection
+                        elements = self.driver.find_elements(By.XPATH, 
+                            "//div[contains(text(), 'Related search')]/following-sibling::a | //div[contains(text(), 'Related search')]/..//a")
+                    else:
+                        elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    
+                    if elements:
+                        related_link = elements[0]  # Take the first related search result
+                        
+                        # Get the product name from the link
+                        link_text = related_link.text.strip()
+                        if len(link_text) > 5:  # Valid product name
+                            print(f"🔗 Found related search: '{link_text}'")
+                            print("🖱️ Clicking on related search link...")
+                            
+                            # Click the related search link
+                            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", related_link)
+                            time.sleep(0.5)  # Reduced from 1
+                            related_link.click()
+                            
+                            # Wait for the new page to load
+                            time.sleep(2.5)  # Reduced from 4
+                            
+                            print("✅ Navigated to related search results")
+                            return True
+                            
+                except Exception as e:
+                    print(f"⚠️ Error with selector {selector}: {e}")
+                    continue
+            
+            print("📝 No related search links found")
+            return False
+            
+        except Exception as e:
+            print(f"❌ Error checking related search: {e}")
+            return False
+
     def extract_product_from_results(self, html_content: str) -> dict:
         """Enhanced product extraction with pricing and rating data"""
         try:
             print("🔍 Extracting product information with enhanced data...")
             
+            # First attempt: Try to extract from main results
+            result = self._extract_main_product_info()
+            
+            # If no product found, check for "Related search" and try again
+            if not result.get('product_name'):
+                print("🔄 No product found in main results, checking for related search...")
+                
+                if self.check_and_handle_related_search():
+                    # Try extraction again after clicking related search
+                    print("🔍 Re-extracting after navigating to related search...")
+                    time.sleep(2)  # Let the page stabilize
+                    result = self._extract_main_product_info()
+                    
+                    if result.get('product_name'):
+                        print("✅ Successfully extracted product from related search!")
+                    else:
+                        print("⚠️ Still no product found after related search navigation")
+                else:
+                    print("⚠️ Could not find or navigate to related search")
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Enhanced extraction error: {e}")
+            return {'error': f'Extraction failed: {str(e)}'}
+    
+    def _extract_main_product_info(self) -> dict:
+        """Extract main product information from current page"""
+        try:
             # Product name extraction
             modern_selectors = [
                 '.PZPZlf[data-attrid="title"]',
@@ -437,8 +520,14 @@ class FastImageRecognitionAPI:
             }
             
         except Exception as e:
-            print(f"❌ Enhanced extraction error: {e}")
-            return {'error': f'Extraction failed: {str(e)}'}
+            print(f"❌ Main product info extraction error: {e}")
+            return {
+                'product_name': None,
+                'source_url': None,
+                'host': None,
+                'pricing': {},
+                'rating': {}
+            }
     
     def perform_google_reverse_search(self, image_data: bytes) -> dict:
         """Perform Google reverse image search (fast mode - uses saved cookies)"""
@@ -458,11 +547,11 @@ class FastImageRecognitionAPI:
             
             print("🖼️ Navigating to Google Images (using saved cookies)...")
             self.driver.get("https://images.google.com")
-            time.sleep(2 + random.random() * 2)
+            time.sleep(1.5)  # Reduced from 2 + random
             
-            # Human behavior simulation
-            self.driver.execute_script(f"window.scrollTo(0, {random.randint(50, 200)});")
-            time.sleep(1 + random.random())
+            # Quick human behavior simulation
+            self.driver.execute_script(f"window.scrollTo(0, {random.randint(20, 100)});")
+            time.sleep(0.5)  # Reduced from 1 + random
             
             print("📷 Looking for camera icon...")
             camera_selectors = [
@@ -480,7 +569,7 @@ class FastImageRecognitionAPI:
                         if element.is_displayed() and element.is_enabled():
                             print(f"📷 Found camera icon: {selector}")
                             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-                            time.sleep(0.5)
+                            time.sleep(0.3)  # Reduced from 0.5
                             self.driver.execute_script("arguments[0].click();", element)
                             camera_clicked = True
                             break
@@ -491,9 +580,9 @@ class FastImageRecognitionAPI:
             
             if not camera_clicked:
                 self.driver.get("https://images.google.com/imghp?hl=en&tab=wi")
-                time.sleep(2)
+                time.sleep(1.5)  # Reduced from 2
             
-            time.sleep(1)
+            time.sleep(0.5)  # Reduced from 1
             
             # Upload file
             print("📁 Uploading image...")
@@ -522,22 +611,22 @@ class FastImageRecognitionAPI:
                 return {'error': 'Could not upload file'}
             
             print("⏳ Waiting for search results...")
-            time.sleep(4)
+            time.sleep(3)  # Reduced from 4
             
-            # Wait for results
+            # Wait for results with shorter timeout
             try:
-                WebDriverWait(self.driver, 15).until(
+                WebDriverWait(self.driver, 10).until(  # Reduced from 15
                     EC.presence_of_element_located((By.CSS_SELECTOR, 'h3, [data-sh], .yuRUbf, .PZPZlf'))
                 )
                 print("✅ Search results loaded")
             except:
-                print("⏳ Results still loading...")
+                print("⏳ Results still loading, proceeding anyway...")
             
-            # Enhanced extraction with all data
+            # Enhanced extraction with related search handling
             result = self.extract_product_from_results(self.driver.page_source)
             
-            # Keep browser open for next request (faster)
-            time.sleep(3)
+            # Reduced wait time for next request
+            time.sleep(1.5)  # Reduced from 3
             
             latency = int((time.time() - start_time) * 1000)
             
