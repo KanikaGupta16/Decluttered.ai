@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Zap, Play, Package, FileText, Coffee, BookOpen, Headphones, Camera, Smartphone, Shirt, Laptop, Gamepad2, Watch, TreePine, Sofa, Heart, DollarSign, Bot, Eye, Tag, Globe, MessageCircle, BarChart3 } from 'lucide-react';
 
 const FloatingItem = ({ 
@@ -75,6 +77,12 @@ const MouseLight = () => {
 };
 
 export default function Home() {
+  const router = useRouter();
+
+  const handleStartSelling = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <div className="relative">
       {/* Navigation Bar */}
@@ -92,9 +100,11 @@ export default function Home() {
               <a href="#how-it-works" className="text-gray-700 hover:text-[#5BAAA7] font-medium transition-colors">How It Works</a>
               <a href="#features" className="text-gray-700 hover:text-[#5BAAA7] font-medium transition-colors">Features</a>
               <a href="#pricing" className="text-gray-700 hover:text-[#5BAAA7] font-medium transition-colors">Pricing</a>
-              <button className="px-6 py-2 bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] text-white font-semibold rounded-lg hover:shadow-lg transition-all">
-                Get Started
-              </button>
+              <Link href="/dashboard">
+                <button className="px-6 py-2 bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] text-white font-semibold rounded-lg hover:shadow-lg transition-all">
+                  Get Started
+                </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -167,6 +177,7 @@ export default function Home() {
               <motion.button 
                 whileHover={{ scale: 1.05, y: -2 }} 
                 whileTap={{ scale: 0.95 }} 
+                onClick={handleStartSelling}
                 className="px-8 py-4 bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all backdrop-blur-sm border border-white/20"
               >
                 Start Selling
@@ -247,7 +258,10 @@ export default function Home() {
           </div>
           
           <div className="text-center mt-12">
-            <button className="px-10 py-4 bg-gradient-to-r from-[#0ecfba] to-[#1dd2aa] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+            <button 
+              onClick={handleStartSelling}
+              className="px-10 py-4 bg-gradient-to-r from-[#0ecfba] to-[#1dd2aa] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+            >
               Start Selling Now
             </button>
           </div>
@@ -481,6 +495,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={handleStartSelling}
                 className="px-8 py-4 bg-white text-teal-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 ➡️ Start Selling

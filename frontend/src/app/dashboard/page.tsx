@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Camera, 
   Clock, 
@@ -42,7 +43,9 @@ import {
   Search,
   Download,
   Share2,
-  Settings
+  Settings,
+  ArrowLeft,
+  Home
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -617,7 +620,7 @@ export default function ComplexDashboardPage() {
 
   const renderDeclutterTab = () => (
     <div className="space-y-8">
-      {/* Enhanced Hero Section */}
+      {/* Enhanced Hero Section with Statistics */}
       <div className="relative -mx-6 overflow-hidden bg-gradient-to-br from-[#F6EFD9]/20 via-white to-[#5BAAA7]/5 py-20">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
@@ -653,28 +656,52 @@ export default function ComplexDashboardPage() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h1 className="text-4xl md:text-6xl font-extrabold text-[#0a1b2a] mb-6">
-              AI-Powered Marketplace
+              Smart AI Automated Tool
               <span className="block bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] bg-clip-text text-transparent">
-                Automation Platform
+                Marketplace Platform
               </span>
             </h1>
             <p className="text-xl text-[#6b7b8c] mb-8 max-w-3xl mx-auto leading-relaxed">
               Identify, price, and list your items across Facebook Marketplace, eBay, and Mercari with AI-powered insights and automated buyer management.
             </p>
             
-            {/* Key Stats Preview */}
-            <div className="flex flex-wrap justify-center gap-6 mb-10">
+            {/* Enhanced Key Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-6 py-4 border border-[#F6EFD9]/40 shadow-lg">
                 <div className="text-2xl font-bold text-[#5BAAA7]">${totalEarnings.toLocaleString()}</div>
                 <div className="text-sm text-[#6b7b8c]">Total Profits</div>
+                <div className="text-xs text-green-600 mt-1">+23% this month</div>
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-6 py-4 border border-[#F6EFD9]/40 shadow-lg">
                 <div className="text-2xl font-bold text-[#5BAAA7]">{avgDaysToSell}</div>
                 <div className="text-sm text-[#6b7b8c]">Avg Days to Sell</div>
+                <div className="text-xs text-blue-600 mt-1">vs 6.4 market avg</div>
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-6 py-4 border border-[#F6EFD9]/40 shadow-lg">
                 <div className="text-2xl font-bold text-[#5BAAA7]">{successRate}%</div>
                 <div className="text-sm text-[#6b7b8c]">Success Rate</div>
+                <div className="text-xs text-purple-600 mt-1">+14% above avg</div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-6 py-4 border border-[#F6EFD9]/40 shadow-lg">
+                <div className="text-2xl font-bold text-[#5BAAA7]">{activeListings}</div>
+                <div className="text-sm text-[#6b7b8c]">Active Listings</div>
+                <div className="text-xs text-orange-600 mt-1">across 3 platforms</div>
+              </div>
+            </div>
+
+            {/* Additional Statistics Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 max-w-4xl mx-auto">
+              <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+                <div className="text-lg font-bold text-[#1A6A6A]">${Math.round(totalRevenue / salesData.length)}</div>
+                <div className="text-sm text-[#6b7b8c]">Avg Sale Price</div>
+              </div>
+              <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+                <div className="text-lg font-bold text-[#1A6A6A]">{Math.round((totalEarnings / totalRevenue) * 100)}%</div>
+                <div className="text-sm text-[#6b7b8c]">Profit Margin</div>
+              </div>
+              <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+                <div className="text-lg font-bold text-[#1A6A6A]">{buyerMessages.length + Math.floor(Math.random() * 20)}</div>
+                <div className="text-sm text-[#6b7b8c]">Messages Handled</div>
               </div>
             </div>
           </motion.div>
@@ -695,168 +722,6 @@ export default function ComplexDashboardPage() {
             />
           </motion.button>
         </div>
-      </div>
-
-      {/* AI-Enhanced Item Detection Results */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold text-[#0a1b2a] flex items-center gap-3">
-            <Brain className="w-8 h-8 text-[#5BAAA7]" />
-            AI Detection Results
-          </h2>
-          <div className="flex items-center gap-4">
-            <select 
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-2 border border-[#F6EFD9]/40 rounded-xl bg-white text-sm"
-            >
-              <option value="all">All Categories</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Furniture">Furniture</option>
-              <option value="Fashion">Fashion</option>
-            </select>
-            <div className="text-sm text-[#6b7b8c] bg-[#F6EFD9]/30 px-4 py-2 rounded-full">
-              {mockDetectedItems.length} items analyzed
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockDetectedItems.map((item) => (
-            <Card key={item.id} className="group cursor-pointer hover:scale-[1.02] transition-all duration-300">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 bg-gradient-to-br from-[#F6EFD9]/30 to-[#5BAAA7]/20 rounded-2xl flex items-center justify-center">
-                      <Package className="w-8 h-8 text-[#5BAAA7]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className={`text-xs font-medium px-2 py-1 rounded-full mb-2 ${
-                        item.confidence >= 0.95 ? 'bg-green-100 text-green-700' :
-                        item.confidence >= 0.85 ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {Math.round(item.confidence * 100)}% Match
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleItemSelection(item.id)}
-                    className="text-[#6b7b8c] hover:text-[#5BAAA7] transition-colors"
-                  >
-                    {selectedItems.includes(item.id) ? 
-                      <CheckSquare className="w-6 h-6 text-[#5BAAA7]" /> : 
-                      <Square className="w-6 h-6" />
-                    }
-                  </button>
-                </div>
-                
-                <h3 className="font-bold text-[#0a1b2a] mb-2 text-lg">{item.name}</h3>
-                <p className="text-sm text-[#6b7b8c] mb-4 flex items-center gap-4">
-                  <span>{item.category} • {item.condition}</span>
-                  <span className={`flex items-center gap-1 ${
-                    item.marketDemand === 'Very High' ? 'text-green-600' :
-                    item.marketDemand === 'High' ? 'text-blue-600' :
-                    'text-yellow-600'
-                  }`}>
-                    <TrendingUp className="w-3 h-3" />
-                    {item.marketDemand}
-                  </span>
-                </p>
-                
-                {/* Price Analysis */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-2xl font-bold bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] bg-clip-text text-transparent">
-                      ${item.estimatedValue}
-                    </div>
-                    <div className="text-xs text-[#6b7b8c]">
-                      ${item.priceRange.min}-${item.priceRange.max}
-                    </div>
-                  </div>
-                  <div className="text-xs text-[#6b7b8c] mb-2">
-                    Based on {item.similarSold} similar sold items
-                  </div>
-                </div>
-
-                {/* Platform Recommendations */}
-                <div className="space-y-2 mb-4">
-                  <div className="text-sm font-semibold text-[#0a1b2a] mb-2">Platform Recommendations:</div>
-                  {Object.entries(item.platformRecommendations).map(([platform, data]) => (
-                    <div key={platform} className="flex items-center justify-between text-xs">
-                      <span className="capitalize font-medium">{platform}:</span>
-                      <span className="text-[#5BAAA7]">${data.price} ({data.timeToSell}d)</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Market Indicators */}
-                <div className="flex items-center justify-between pt-4 border-t border-[#F6EFD9]/30">
-                  <div className="flex items-center gap-2">
-                    <motion.div 
-                      className={`w-2 h-2 rounded-full ${
-                        item.trendDirection === 'up' ? 'bg-green-400' :
-                        item.trendDirection === 'down' ? 'bg-red-400' :
-                        'bg-yellow-400'
-                      }`}
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
-                    <span className="text-xs text-[#6b7b8c] capitalize">
-                      {item.trendDirection} trend
-                    </span>
-                  </div>
-                  <div className="text-xs text-[#6b7b8c]">
-                    {item.seasonality.replace('-', ' ')}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {selectedItems.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 p-6 bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl border border-[#5BAAA7]/20"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-[#0a1b2a] mb-2 text-lg">
-                  {selectedItems.length} items selected for listing
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-[#6b7b8c]">Est. total value:</span>
-                    <div className="font-bold text-[#5BAAA7] text-lg">
-                      ${mockDetectedItems
-                        .filter(item => selectedItems.includes(item.id))
-                        .reduce((sum, item) => sum + item.estimatedValue, 0)
-                        .toLocaleString()}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[#6b7b8c]">Best platform:</span>
-                    <div className="font-bold text-[#5BAAA7]">Facebook</div>
-                  </div>
-                  <div>
-                    <span className="text-[#6b7b8c]">Avg. time to sell:</span>
-                    <div className="font-bold text-[#5BAAA7]">3.8 days</div>
-                  </div>
-                  <div>
-                    <span className="text-[#6b7b8c]">Success probability:</span>
-                    <div className="font-bold text-[#5BAAA7]">87%</div>
-                  </div>
-                </div>
-              </div>
-              <button className="bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2">
-                <Zap className="w-5 h-5" />
-                Auto-Create Listings
-              </button>
-            </div>
-          </motion.div>
-        )}
       </div>
     </div>
   );
@@ -1031,185 +896,247 @@ export default function ComplexDashboardPage() {
 
   const renderOffersTab = () => (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-[#0a1b2a] flex items-center gap-3">
-          <MessageCircle className="w-8 h-8 text-[#5BAAA7]" />
-          Buyer Messages & AI Analysis
-        </h2>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-[#6b7b8c] bg-[#F6EFD9]/30 px-4 py-2 rounded-full">
-            {buyerMessages.length} active conversations
+      {/* Message Center - Card Design */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white rounded-3xl shadow-2xl border border-[#F6EFD9]/30 overflow-hidden"
+      >
+        {/* Card Header */}
+        <div className="bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <MessageCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Message Center</h2>
+                <p className="text-white/80 text-sm">AI-powered buyer interactions</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                <div className="text-white font-bold text-lg">{buyerMessages.length}</div>
+                <div className="text-white/80 text-xs">New Messages</div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                <div className="text-white font-bold text-lg">97%</div>
+                <div className="text-white/80 text-xs">Response Rate</div>
+              </div>
+            </div>
           </div>
-          <button className="bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            Auto-Respond All
-          </button>
         </div>
-      </div>
 
-      <div className="space-y-6">
-        {buyerMessages.length > 0 ? (
-          buyerMessages.map((message) => (
-            <Card key={message.id} className="overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <h3 className="font-bold text-[#0a1b2a] text-lg">{message.itemTitle}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      message.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
-                        : 'bg-green-100 text-green-800 border border-green-200'
-                    }`}>
-                      {message.status}
-                    </span>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                      {message.platform}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-[#6b7b8c] mb-3">
-                    <span>From {message.buyerName}</span>
-                    <span>•</span>
-                    <span>{message.timestamp}</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span>{message.buyerHistory.rating}</span>
-                      <span className="text-xs">({message.buyerHistory.previousPurchases} purchases)</span>
-                    </div>
-                  </div>
-                  
-                  {/* Message Content */}
-                  <div className="bg-[#F6EFD9]/20 rounded-xl p-4 mb-4">
-                    <p className="text-[#0a1b2a] mb-3">"{message.message}"</p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold text-[#5BAAA7]">
-                        ${message.offerAmount}
-                      </div>
-                      <div className="text-sm text-[#6b7b8c]">
-                        vs. ${message.originalPrice} asking
-                        <span className={`ml-2 font-semibold ${
-                          ((message.originalPrice - message.offerAmount) / message.originalPrice) < 0.1 
-                            ? 'text-green-600' : 'text-red-600'
+        {/* Card Content */}
+        <div className="p-8">
+          {/* Enhanced Statistics Row */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+              <div className="text-lg font-bold text-[#1A6A6A]">{Math.round(totalRevenue / salesData.length)}</div>
+              <div className="text-sm text-[#6b7b8c]">Avg Message Value</div>
+            </div>
+            <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+              <div className="text-lg font-bold text-[#1A6A6A]">2.3</div>
+              <div className="text-sm text-[#6b7b8c]">Avg Response Time (hrs)</div>
+            </div>
+            <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+              <div className="text-lg font-bold text-[#1A6A6A]">84%</div>
+              <div className="text-sm text-[#6b7b8c]">Offer Acceptance Rate</div>
+            </div>
+            <div className="bg-gradient-to-r from-[#5BAAA7]/10 to-[#1A6A6A]/10 rounded-2xl px-6 py-4 border border-[#5BAAA7]/20">
+              <div className="text-lg font-bold text-[#1A6A6A]">{buyerMessages.length + Math.floor(Math.random() * 15)}</div>
+              <div className="text-sm text-[#6b7b8c]">Total Messages Today</div>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-2 mb-8">
+            {['all', 'facebook', 'ebay', 'mercari'].map((platform) => (
+              <button
+                key={platform}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all text-sm ${
+                  true // Always show first as active for demo
+                    ? 'bg-gradient-to-r from-[#5BAAA7] to-[#1A6A6A] text-white shadow-lg'
+                    : 'bg-[#F6EFD9]/30 text-[#6b7b8c] hover:bg-[#F6EFD9]/50 hover:text-[#0a1b2a]'
+                }`}
+              >
+                {platform === 'all' ? 'All Platforms' : 
+                 platform.charAt(0).toUpperCase() + platform.slice(1)}
+                {platform === 'all' && (
+                  <span className="ml-2 bg-[#1A6A6A] text-white text-xs px-2 py-1 rounded-full">
+                    {buyerMessages.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {buyerMessages.length > 0 ? (
+            <div className="space-y-6">
+              {buyerMessages.map((message) => (
+                <Card key={message.id} className="overflow-hidden">
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="font-bold text-[#0a1b2a] text-lg">{message.itemTitle}</h3>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          message.status === 'pending' 
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+                            : 'bg-green-100 text-green-800 border border-green-200'
                         }`}>
-                          ({Math.round(((message.originalPrice - message.offerAmount) / message.originalPrice) * 100)}% discount)
+                          {message.status}
+                        </span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                          {message.platform}
                         </span>
                       </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-[#6b7b8c] mb-3">
+                        <span>From {message.buyerName}</span>
+                        <span>•</span>
+                        <span>{message.timestamp}</span>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span>{message.buyerHistory.rating}</span>
+                          <span className="text-xs">({message.buyerHistory.previousPurchases} purchases)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Message Content */}
+                      <div className="bg-[#F6EFD9]/20 rounded-xl p-4 mb-4">
+                        <p className="text-[#0a1b2a] mb-3">"{message.message}"</p>
+                        <div className="flex items-center justify-between">
+                          <div className="text-2xl font-bold text-[#5BAAA7]">
+                            ${message.offerAmount}
+                          </div>
+                          <div className="text-sm text-[#6b7b8c]">
+                            vs. ${message.originalPrice} asking
+                            <span className={`ml-2 font-semibold ${
+                              ((message.originalPrice - message.offerAmount) / message.originalPrice) < 0.1 
+                                ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              ({Math.round(((message.originalPrice - message.offerAmount) / message.originalPrice) * 100)}% discount)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* AI Analysis Section */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-blue-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Brain className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-blue-900">AI Analysis</span>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                    {Math.round(message.aiAnalysis.negotiationLikelihood * 100)}% negotiation likelihood
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                  <div>
-                    <div className="text-xs text-blue-600 mb-1">Sentiment</div>
-                    <div className={`font-semibold capitalize px-2 py-1 rounded-full text-xs ${
-                      message.aiAnalysis.sentiment === 'positive' ? 'bg-green-100 text-green-700' :
-                      message.aiAnalysis.sentiment === 'negative' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {message.aiAnalysis.sentiment}
+                  {/* AI Analysis Section */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-blue-900">AI Analysis</span>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                        {Math.round(message.aiAnalysis.negotiationLikelihood * 100)}% negotiation likelihood
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                      <div>
+                        <div className="text-xs text-blue-600 mb-1">Sentiment</div>
+                        <div className={`font-semibold capitalize px-2 py-1 rounded-full text-xs ${
+                          message.aiAnalysis.sentiment === 'positive' ? 'bg-green-100 text-green-700' :
+                          message.aiAnalysis.sentiment === 'negative' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {message.aiAnalysis.sentiment}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-blue-600 mb-1">Urgency</div>
+                        <div className={`font-semibold capitalize px-2 py-1 rounded-full text-xs ${
+                          message.aiAnalysis.urgency === 'high' ? 'bg-red-100 text-red-700' :
+                          message.aiAnalysis.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {message.aiAnalysis.urgency}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-blue-600 mb-1">Suggested Price</div>
+                        <div className="font-bold text-green-600">${message.aiAnalysis.suggestedPrice}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-blue-800 mb-3">
+                      <strong>Reasoning:</strong> {message.aiAnalysis.reasoning}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xs text-blue-600 mb-1">Urgency</div>
-                    <div className={`font-semibold capitalize px-2 py-1 rounded-full text-xs ${
-                      message.aiAnalysis.urgency === 'high' ? 'bg-red-100 text-red-700' :
-                      message.aiAnalysis.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {message.aiAnalysis.urgency}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-blue-600 mb-1">Suggested Price</div>
-                    <div className="font-bold text-green-600">${message.aiAnalysis.suggestedPrice}</div>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-blue-800 mb-3">
-                  <strong>Reasoning:</strong> {message.aiAnalysis.reasoning}
-                </div>
-              </div>
 
-              {/* Buyer History */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                <div className="text-sm font-semibold text-gray-700 mb-2">Buyer History</div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="text-gray-500">Purchases</div>
-                    <div className="font-bold">{message.buyerHistory.previousPurchases}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500">Response Time</div>
-                    <div className="font-bold">{message.buyerHistory.avgResponseTime}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500">Cancellation Rate</div>
-                    <div className="font-bold">{Math.round(message.buyerHistory.cancellationRate * 100)}%</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500">Rating</div>
-                    <div className="font-bold flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      {message.buyerHistory.rating}
+                  {/* Buyer History */}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                    <div className="text-sm font-semibold text-gray-700 mb-2">Buyer History</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-gray-500">Purchases</div>
+                        <div className="font-bold">{message.buyerHistory.previousPurchases}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Response Time</div>
+                        <div className="font-bold">{message.buyerHistory.avgResponseTime}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Cancellation Rate</div>
+                        <div className="font-bold">{Math.round(message.buyerHistory.cancellationRate * 100)}%</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Rating</div>
+                        <div className="font-bold flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          {message.buyerHistory.rating}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-[#F6EFD9]/30">
-                <button 
-                  onClick={() => handleAcceptOffer(message.id)}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 hover:shadow-lg"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Accept ${message.offerAmount}
-                </button>
-                <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Counter ${message.aiAnalysis.suggestedPrice}
-                </button>
-                <button className="px-6 border-2 border-[#5BAAA7] text-[#5BAAA7] hover:bg-[#5BAAA7] hover:text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
-                  <MessageCircle className="w-4 h-4" />
-                  Message
-                </button>
-                <button className="px-6 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  AI Respond
-                </button>
-              </div>
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-3 pt-4 border-t border-[#F6EFD9]/30">
+                    <button 
+                      onClick={() => handleAcceptOffer(message.id)}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 hover:shadow-lg"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Accept ${message.offerAmount}
+                    </button>
+                    <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Counter ${message.aiAnalysis.suggestedPrice}
+                    </button>
+                    <button className="px-6 border-2 border-[#5BAAA7] text-[#5BAAA7] hover:bg-[#5BAAA7] hover:text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      Message
+                    </button>
+                    <button className="px-6 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      AI Respond
+                    </button>
+                  </div>
+                </div>
+              </Card>
+              ))}
             </div>
-          </Card>
-        ))
-        ) : (
-          <Card>
-            <div className="p-12 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-[#F6EFD9]/30 to-[#5BAAA7]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <MessageCircle className="w-12 h-12 text-[#5BAAA7]/50" />
+          ) : (
+            <Card>
+              <div className="p-12 text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-[#F6EFD9]/30 to-[#5BAAA7]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <MessageCircle className="w-12 h-12 text-[#5BAAA7]/50" />
+                </div>
+                <h3 className="text-xl font-bold text-[#0a1b2a] mb-3">All caught up! 🎉</h3>
+                <p className="text-[#6b7b8c] mb-6">
+                  No pending messages. Great job managing your buyer conversations!
+                </p>
+                <div className="text-sm text-[#5BAAA7] bg-[#5BAAA7]/10 px-4 py-2 rounded-full inline-block">
+                  Check back later for new inquiries
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-[#0a1b2a] mb-3">All caught up! 🎉</h3>
-              <p className="text-[#6b7b8c] mb-6">
-                No pending messages. Great job managing your buyer conversations!
-              </p>
-              <div className="text-sm text-[#5BAAA7] bg-[#5BAAA7]/10 px-4 py-2 rounded-full inline-block">
-                Check back later for new inquiries
-              </div>
-            </div>
-          </Card>
-        )}
-      </div>
+            </Card>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 
@@ -1619,6 +1546,13 @@ export default function ComplexDashboardPage() {
       <header className="sticky top-0 z-20 backdrop-blur-md border-b border-[#F6EFD9]/30 bg-white/95 shadow-sm">
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Link 
+              href="/"
+              className="flex items-center gap-2 text-[#6b7b8c] hover:text-[#5BAAA7] transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <Home className="w-5 h-5" />
+            </Link>
             <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               <span className="text-[#5BAAA7]">de</span>
               <span className="text-slate-900">Cluttered</span>
