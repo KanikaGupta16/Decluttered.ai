@@ -167,7 +167,7 @@ class MarketplaceLister:
         try:
             print("🔍 Checking Facebook login status...")
             
-            self.driver.get("https://www.facebook.com/marketplace")
+            self.driver.get("https://www.facebook.com/marketplace/create/item")
             time.sleep(3)
             
             current_url = self.driver.current_url.lower()
@@ -175,7 +175,7 @@ class MarketplaceLister:
             
             if ("marketplace" in current_url and 
                 "login" not in current_url and 
-                "marketplace" in page_title):
+                ("marketplace" in page_title or "create" in current_url)):
                 
                 print("✅ Facebook login confirmed")
                 self.facebook_logged_in = True
@@ -209,11 +209,11 @@ class MarketplaceLister:
             
             input("\n>>> Press Enter after you've successfully logged in...")
             
-            # Verify login by accessing marketplace
+            # Verify login by accessing marketplace create page
             for attempt in range(3):
                 print(f"🔄 Verifying login... (attempt {attempt + 1}/3)")
                 
-                self.driver.get("https://www.facebook.com/marketplace")
+                self.driver.get("https://www.facebook.com/marketplace/create/item")
                 time.sleep(4)
                 
                 if self.check_facebook_login():
