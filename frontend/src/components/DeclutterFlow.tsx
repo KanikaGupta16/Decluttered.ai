@@ -17,14 +17,37 @@ interface DetectedObject {
     width: number;
     height: number;
   };
-  thumbnail: string;
+  croppedImageUrl: string;
   estimatedValue: number;
   category?: string;
   condition?: string;
   description?: string;
   tags?: string[];
-  timestamp: number;
-  frameImage: string;
+  timestamp?: number;
+  frameImage?: string;
+  googleData?: {
+    rating?: {
+      rating: number;
+      rating_out_of: number;
+      review_count: number;
+      review_count_text: string;
+    } | null;
+    pricing?: {
+      current_prices: Array<{
+        price: number;
+        currency: string;
+        source: string;
+      }>;
+      typical_price_range?: {
+        min: number;
+        max: number;
+        currency: string;
+        text: string;
+      };
+    } | null;
+    source_url?: string | null;
+    host?: string | null;
+  };
 }
 
 interface QueuedItem {
@@ -35,7 +58,7 @@ interface QueuedItem {
   tags: string[];
   status: 'ready' | 'posting' | 'posted' | 'error';
   platforms: string[];
-  thumbnail: string;
+  croppedImageUrl: string;
   timestamp: number;
   frameImage: string;
 }
@@ -77,7 +100,7 @@ const DeclutterFlow = ({ onComplete, onBack }: DeclutterFlowProps) => {
       tags: post.tags,
       status: 'ready' as const,
       platforms: [post.platform],
-      thumbnail: post.item.croppedImageUrl,
+      croppedImageUrl: post.item.croppedImageUrl,
       timestamp: Date.now(),
       frameImage: post.item.croppedImageUrl
     }));

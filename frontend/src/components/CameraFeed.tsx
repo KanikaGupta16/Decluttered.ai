@@ -192,8 +192,13 @@ const CameraFeed = ({ onObjectsSelected, onBack }: CameraFeedProps) => {
         }
         
         console.log('Starting photo analysis...');
-        // Start analysis
-        analyzePhoto();
+        // Start backend pipeline analysis (runs OD.py via pipeline API)
+        try {
+          await sendToPipeline(photoDataUrl);
+        } catch (e) {
+          console.error('Pipeline analysis failed, falling back to local analyzePhoto:', e);
+          analyzePhoto();
+        }
       } else {
         console.error('Canvas context not found');
       }
@@ -208,6 +213,12 @@ const CameraFeed = ({ onObjectsSelected, onBack }: CameraFeedProps) => {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
     }
+  };
+
+  // Minimal stub to avoid needing Supabase bucket checks during capture step.
+  // Returns false so the upload is skipped and the code falls back to analysis.
+  const checkBucketExists = async (): Promise<boolean> => {
+    return false;
   };
 
   const uploadPhotoToSupabase = async (photoDataUrl: string) => {
@@ -277,6 +288,131 @@ const CameraFeed = ({ onObjectsSelected, onBack }: CameraFeedProps) => {
       setDetectedObjects(mockObjects);
       console.log('Detected objects set:', mockObjects);
     }, 3000);
+  };
+
+  // ----- New: send captured image to backend pipeline API -----
+  const PIPELINE_API_BASE = (process.env.NEXT_PUBLIC_PIPELINE_API_URL as string) || 'http://localhost:3005';
+
+  const sendToPipeline = async (photoDataUrl: string) => {
+    console.log('sendToPipeline called');
+    setIsProcessing(true);
+
+    try {
+      // Convert data URL to blob
+      const resp = await fetch(photoDataUrl);
+      const blob = await resp.blob();
+      const timestamp = Date.now();
+      const fileName = `photo_${timestamp}.jpg`;
+
+      const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+      const form = new FormData();
+      form.append('image', file);
+      // ask backend to run asynchronously and return a job id
+      form.append('sync', 'false');
+
+      const res = await fetch(`${PIPELINE_API_BASE}/api/pipeline/process`, {
+        method: 'POST',
+        body: form
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Pipeline API returned ${res.status}: ${text}`);
+      }
+
+      const data = await res.json();
+      console.log('Pipeline upload response:', data);
+
+      if (data && data.job_id) {
+        // Poll job status until completion
+        await pollJobStatus(data.job_id);
+      } else if (data && data.status === 'completed' && data.results) {
+        // synchronous response with results
+        const mapped = mapPipelineResultsToDetectedObjects(data.results);
+        setDetectedObjects(mapped);
+      } else {
+        throw new Error('Unexpected pipeline API response');
+      }
+
+    } catch (error) {
+      console.error('sendToPipeline error:', error);
+      // Fallback to local mocked analysis so UX is not blocked
+      analyzePhoto();
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const pollJobStatus = async (jobId: string) => {
+    console.log('pollJobStatus for', jobId);
+    const statusUrl = `${PIPELINE_API_BASE}/api/pipeline/status/${jobId}`;
+
+    return new Promise<void>((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 60; // ~60 seconds timeout
+
+      const interval = setInterval(async () => {
+        attempts += 1;
+        try {
+          const r = await fetch(statusUrl);
+          if (!r.ok) {
+            throw new Error(`Status request failed: ${r.status}`);
+          }
+          const j = await r.json();
+          console.log('Job status:', j);
+
+          if (j.status === 'completed') {
+            clearInterval(interval);
+            if (j.results) {
+              const mapped = mapPipelineResultsToDetectedObjects(j.results);
+              setDetectedObjects(mapped);
+            }
+            resolve();
+          } else if (j.status === 'error') {
+            clearInterval(interval);
+            reject(new Error(j.message || 'Processing error'));
+          } else {
+            // still processing or queued
+            if (attempts >= maxAttempts) {
+              clearInterval(interval);
+              reject(new Error('Pipeline polling timed out'));
+            }
+          }
+
+        } catch (e) {
+          clearInterval(interval);
+          reject(e);
+        }
+      }, 1000);
+    });
+  };
+
+  const mapPipelineResultsToDetectedObjects = (results: any): DetectedObject[] => {
+    // Try common shapes for results coming from the backend pipeline.
+    // If the pipeline returns an objects/detected_objects array, map it; otherwise return mock fallback.
+    const src = results?.detected_objects || results?.objects || results?.items || null;
+
+    if (!Array.isArray(src)) {
+      console.warn('Unrecognized pipeline results shape, using mock objects');
+      return mockObjects;
+    }
+
+    return src.map((o: any, idx: number) => ({
+      id: o.id?.toString() || `${Date.now()}_${idx}`,
+      name: o.name || o.label || o.class || 'Unknown',
+      confidence: typeof o.confidence === 'number' ? o.confidence : (o.score || 0.5),
+      boundingBox: {
+        x: o.bbox?.x ?? o.bbox?.[0] ?? 0,
+        y: o.bbox?.y ?? o.bbox?.[1] ?? 0,
+        width: o.bbox?.width ?? o.bbox?.[2] ?? 100,
+        height: o.bbox?.height ?? o.bbox?.[3] ?? 100,
+      },
+      thumbnail: o.thumbnail || o.thumb || '/vercel.svg',
+      estimatedValue: o.estimated_value || o.estimatedValue || 0,
+      timestamp: o.timestamp || Date.now(),
+      frameImage: o.frame_image || o.frameImage || '/vercel.svg'
+    }));
   };
 
   const handleObjectApprove = (objectId: string) => {

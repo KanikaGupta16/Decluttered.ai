@@ -27,6 +27,29 @@ interface DetectedObject {
   };
   croppedImageUrl: string;
   estimatedValue: number;
+  googleData?: {
+    rating?: {
+      rating: number;
+      rating_out_of: number;
+      review_count: number;
+      review_count_text: string;
+    } | null;
+    pricing?: {
+      current_prices: Array<{
+        price: number;
+        currency: string;
+        source: string;
+      }>;
+      typical_price_range?: {
+        min: number;
+        max: number;
+        currency: string;
+        text: string;
+      };
+    } | null;
+    source_url?: string | null;
+    host?: string | null;
+  };
 }
 
 interface ItemSelectionProps {
@@ -92,20 +115,28 @@ const ItemSelection = ({ detectedObjects, onBack, onItemsSelected }: ItemSelecti
               <div className="text-center">
                 <h2 className="text-black text-xl font-semibold mb-2">Choose Items to Sell</h2>
                 <p className="text-black/70 text-sm mb-4">
-                  Select the items you want to sell. We'll help you create optimized listings for each platform.
+                  Items have been identified with Google data! Select which ones to sell while we analyze marketplace prices.
                 </p>
                 <div className="flex items-center justify-center gap-4 text-sm text-black/60">
                   <div className="flex items-center gap-1">
                     <Check className="w-4 h-4 text-green-500" />
-                    <span>AI Detected</span>
+                    <span>Google Identified</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span>Ratings Available</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="w-4 h-4 text-green-500" />
                     <span>Price Estimated</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Tag className="w-4 h-4 text-blue-500" />
-                    <span>Auto-Tagged</span>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
+                    />
+                    <span>Analyzing Markets</span>
                   </div>
                 </div>
               </div>
@@ -156,23 +187,59 @@ const ItemSelection = ({ detectedObjects, onBack, onItemsSelected }: ItemSelecti
                           {item.name}
                         </h3>
                         
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="text-black/70 text-sm">
-                              {(item.confidence * 100).toFixed(0)}% confidence
-                            </span>
+                        {/* Google Rating */}
+                        {item.googleData?.rating && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="text-black/70 text-sm">
+                                {item.googleData.rating.rating.toFixed(1)}/{item.googleData.rating.rating_out_of}
+                              </span>
+                              {item.googleData.rating.review_count && (
+                                <span className="text-black/50 text-xs">
+                                  ({item.googleData.rating.review_count_text || `${item.googleData.rating.review_count} reviews`})
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
+                        {/* Detection Confidence */}
+                        {!item.googleData?.rating && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="text-black/70 text-sm">
+                                {(item.confidence * 100).toFixed(0)}% confidence
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Price Information */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <DollarSign className="w-5 h-5 text-green-500" />
-                            <span className="text-green-500 font-bold text-xl">
-                              ${item.estimatedValue}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-green-500 font-bold text-xl">
+                                ${item.estimatedValue}
+                              </span>
+                              {/* Google Typical Price Range */}
+                              {item.googleData?.pricing?.typical_price_range && (
+                                <span className="text-black/50 text-xs">
+                                  Typically ${item.googleData.pricing.typical_price_range.min}-${item.googleData.pricing.typical_price_range.max}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
+
+                        {/* Source Info */}
+                        {item.googleData?.host && (
+                          <div className="text-black/40 text-xs truncate">
+                            Found on {item.googleData.host}
+                          </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex gap-2 pt-2">
@@ -290,13 +357,68 @@ const ItemSelection = ({ detectedObjects, onBack, onItemsSelected }: ItemSelecti
                   />
                 </div>
                 
-                <div className="text-center">
+                <div className="text-center space-y-3">
                   <h4 className="text-white font-semibold text-lg mb-2">
                     {detectedObjects.find(item => item.id === showDetailModal)?.name}
                   </h4>
+                  
+                  {/* Price */}
                   <p className="text-green-400 font-bold text-xl">
                     ${detectedObjects.find(item => item.id === showDetailModal)?.estimatedValue}
                   </p>
+                  
+                  {/* Google Data */}
+                  {(() => {
+                    const item = detectedObjects.find(item => item.id === showDetailModal);
+                    const googleData = item?.googleData;
+                    
+                    return (
+                      <div className="space-y-2 text-sm">
+                        {/* Rating */}
+                        {googleData?.rating && (
+                          <div className="flex items-center justify-center gap-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-white">
+                              {googleData.rating.rating.toFixed(1)}/{googleData.rating.rating_out_of}
+                            </span>
+                            {googleData.rating.review_count && (
+                              <span className="text-white/70">
+                                ({googleData.rating.review_count_text || `${googleData.rating.review_count} reviews`})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Typical Price Range */}
+                        {googleData?.pricing?.typical_price_range && (
+                          <div className="text-white/70">
+                            Typically ${googleData.pricing.typical_price_range.min}-${googleData.pricing.typical_price_range.max}
+                          </div>
+                        )}
+                        
+                        {/* Source */}
+                        {googleData?.host && (
+                          <div className="text-white/50 text-xs">
+                            Found on {googleData.host}
+                          </div>
+                        )}
+                        
+                        {/* View Source Link */}
+                        {googleData?.source_url && (
+                          <div className="mt-3">
+                            <a
+                              href={googleData.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-white/20 text-white text-xs rounded-lg hover:bg-white/30 transition-all"
+                            >
+                              View Source
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </motion.div>

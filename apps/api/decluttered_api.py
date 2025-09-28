@@ -24,10 +24,10 @@ from dotenv import load_dotenv
 try:
     from agentmail import AgentMail
     AGENTMAIL_AVAILABLE = True
-    print("✅ AgentMail SDK available")
+    print("[OK] AgentMail SDK available")
 except ImportError:
     AGENTMAIL_AVAILABLE = False
-    print("⚠️ AgentMail SDK not installed - run: pip install agentmail")
+    print("[WARNING] AgentMail SDK not installed - run: pip install agentmail")
 
 # LiveKit Agents SDK for voice
 try:
@@ -36,19 +36,19 @@ try:
         cli, function_tool
     )
     LIVEKIT_AVAILABLE = True
-    print("✅ LiveKit Agents SDK available")
+    print("[OK] LiveKit Agents SDK available")
     
     # Try to import plugins (optional)
     try:
         from livekit.plugins import deepgram, elevenlabs, openai, silero
-        print("✅ LiveKit plugins available (deepgram, elevenlabs, openai, silero)")
+        print("[OK] LiveKit plugins available (deepgram, elevenlabs, openai, silero)")
     except ImportError as plugin_error:
-        print(f"⚠️ Some LiveKit plugins unavailable: {plugin_error}")
-        print("💡 Install with: pip install livekit-plugins-deepgram livekit-plugins-elevenlabs livekit-plugins-openai livekit-plugins-silero")
+        print(f"[WARNING] Some LiveKit plugins unavailable: {plugin_error}")
+        print("[BULB] Install with: pip install livekit-plugins-deepgram livekit-plugins-elevenlabs livekit-plugins-openai livekit-plugins-silero")
         
 except ImportError:
     LIVEKIT_AVAILABLE = False
-    print("⚠️ LiveKit Agents SDK not installed - run: pip install livekit-agents")
+    print("[WARNING] LiveKit Agents SDK not installed - run: pip install livekit-agents")
 
 # Gemini for intelligence
 try:
@@ -94,14 +94,14 @@ class DeclutteredAgentSystem:
         
         if url and key:
             self.supabase = create_client(url, key)
-            print("✅ Supabase connected")
+            print("[OK] Supabase connected")
         else:
-            print("⚠️ Supabase credentials missing")
+            print("[WARNING] Supabase credentials missing")
     
     def setup_agentmail(self):
         """Initialize AgentMail client using official SDK"""
         if not AGENTMAIL_AVAILABLE:
-            print("⚠️ AgentMail SDK not available - using mock mode")
+            print("[WARNING] AgentMail SDK not available - using mock mode")
             return
             
         api_key = os.getenv('AGENTMAIL_API_KEY')
@@ -109,11 +109,11 @@ class DeclutteredAgentSystem:
             try:
                 # Use the official AgentMail SDK
                 self.agentmail_client = AgentMail(api_key=api_key)
-                print("✅ AgentMail client initialized")
+                print("[OK] AgentMail client initialized")
             except Exception as e:
-                print(f"❌ AgentMail setup failed: {e}")
+                print(f"[ERROR] AgentMail setup failed: {e}")
         else:
-            print("⚠️ AGENTMAIL_API_KEY not found")
+            print("[WARNING] AGENTMAIL_API_KEY not found")
     
     def setup_gemini(self):
         """Setup Gemini for AI intelligence"""
@@ -125,9 +125,9 @@ class DeclutteredAgentSystem:
             try:
                 genai.configure(api_key=api_key)
                 self.gemini_model = genai.GenerativeModel('gemini-2.0-flash-exp')
-                print("✅ Gemini AI configured for agent intelligence")
+                print("[OK] Gemini AI configured for agent intelligence")
             except Exception as e:
-                print(f"⚠️ Gemini setup failed: {e}")
+                print(f"[WARNING] Gemini setup failed: {e}")
     
     def setup_agents(self):
         """Create AgentMail inboxes and LiveKit voice agents"""
@@ -165,7 +165,7 @@ class DeclutteredAgentSystem:
     def create_agent_inboxes(self):
         """Create AgentMail inboxes using official SDK"""
         if not self.agentmail_client:
-            print("⚠️ AgentMail client not available - using mock inboxes")
+            print("[WARNING] AgentMail client not available - using mock inboxes")
             return
             
         try:
@@ -179,7 +179,7 @@ class DeclutteredAgentSystem:
                     )
                     
                     self.agent_inboxes[agent_id] = inbox
-                    print(f"✅ Created AgentMail inbox: {config.username}@{config.domain}")
+                    print(f"[OK] Created AgentMail inbox: {config.username}@{config.domain}")
                     
                     # Setup webhooks for email notifications
                     self.setup_email_webhook(agent_id, inbox)
@@ -187,7 +187,7 @@ class DeclutteredAgentSystem:
                 except Exception as e:
                     error_message = str(e)
                     if "AlreadyExistsError" in error_message or "already exists" in error_message.lower():
-                        print(f"✅ AgentMail inbox already exists: {config.username}@{config.domain}")
+                        print(f"[OK] AgentMail inbox already exists: {config.username}@{config.domain}")
                         # Try to get the existing inbox
                         try:
                             inboxes = self.agentmail_client.inboxes.list()
@@ -197,10 +197,10 @@ class DeclutteredAgentSystem:
                                 expected_email = f"{config.username}@{config.domain}"
                                 if inbox_email == expected_email:
                                     self.agent_inboxes[agent_id] = existing_inbox
-                                    print(f"✅ Retrieved existing inbox: {expected_email}")
+                                    print(f"[OK] Retrieved existing inbox: {expected_email}")
                                     break
                         except Exception as list_error:
-                            print(f"⚠️ Could not retrieve existing inbox for {agent_id}: {list_error}")
+                            print(f"[WARNING] Could not retrieve existing inbox for {agent_id}: {list_error}")
                             # For now, create a mock inbox object for the agent to use
                             class MockInbox:
                                 def __init__(self, username, domain):
@@ -211,10 +211,10 @@ class DeclutteredAgentSystem:
                             
                             self.agent_inboxes[agent_id] = MockInbox(config.username, config.domain)
                     else:
-                        print(f"⚠️ Failed to create inbox for {agent_id}: {e}")
+                        print(f"[WARNING] Failed to create inbox for {agent_id}: {e}")
                     
         except Exception as e:
-            print(f"❌ Agent inbox creation failed: {e}")
+            print(f"[ERROR] Agent inbox creation failed: {e}")
     
     def setup_email_webhook(self, agent_id: str, inbox):
         """Setup email webhook using AgentMail WebSocket or webhook API"""
@@ -224,16 +224,16 @@ class DeclutteredAgentSystem:
     def setup_livekit_voice_agents(self):
         """Setup LiveKit voice agents for each specialist"""
         if not LIVEKIT_AVAILABLE:
-            print("⚠️ LiveKit not available - voice features disabled")
+            print("[WARNING] LiveKit not available - voice features disabled")
             return
             
         try:
             # Setup voice assistant agent with proper LiveKit integration
             self.create_voice_assistant_agent()
-            print("✅ LiveKit voice agents configured")
+            print("[OK] LiveKit voice agents configured")
             
         except Exception as e:
-            print(f"❌ LiveKit setup failed: {e}")
+            print(f"[ERROR] LiveKit setup failed: {e}")
     
     def create_voice_assistant_agent(self):
         """Create LiveKit voice assistant with AgentMail integration"""
@@ -304,9 +304,9 @@ class DeclutteredAgentSystem:
             
             Keep responses conversational and helpful. Use the available tools to provide real-time data and take actions."""
             voice_agent._tools = [get_listing_analytics, send_buyer_response, get_pricing_recommendations]
-            print("✅ LiveKit Voice Agent created successfully")
+            print("[OK] LiveKit Voice Agent created successfully")
         except Exception as agent_error:
-            print(f"⚠️ LiveKit Agent creation issue: {agent_error}")
+            print(f"[WARNING] LiveKit Agent creation issue: {agent_error}")
             # Create a mock agent for development
             class MockAgent:
                 def __init__(self):
@@ -340,7 +340,7 @@ class DeclutteredAgentSystem:
             }
             
         except Exception as e:
-            print(f"⚠️ Error fetching analytics: {e}")
+            print(f"[WARNING] Error fetching analytics: {e}")
             return {"items": [], "total_inquiries": 0}
     
     async def generate_pricing_analysis(self, item_name: str) -> Dict:
@@ -382,7 +382,7 @@ Provide pricing recommendation in JSON:
                 return json.loads(json_text)
             
         except Exception as e:
-            print(f"⚠️ Pricing analysis failed: {e}")
+            print(f"[WARNING] Pricing analysis failed: {e}")
         
         return {"recommended_price": 100, "strategy": "market_average", "confidence": 0.6}
 
@@ -400,7 +400,7 @@ class NegotiatorAgent:
             subject = email_data.get('subject', '')
             body = email_data.get('text', '')
             
-            print(f"📧 Processing buyer email from {sender}")
+            print(f"[EMAIL] Processing buyer email from {sender}")
             
             # Extract item reference from subject/body
             item_id = self.extract_item_reference(subject, body)
@@ -431,7 +431,7 @@ class NegotiatorAgent:
             }
             
         except Exception as e:
-            print(f"❌ Email processing error: {e}")
+            print(f"[ERROR] Email processing error: {e}")
             return {'error': str(e)}
     
     def extract_item_reference(self, subject: str, body: str) -> Optional[str]:
@@ -486,7 +486,7 @@ Respond only in JSON format:
                 return json.loads(json_text)
                 
         except Exception as e:
-            print(f"⚠️ AI analysis failed: {e}")
+            print(f"[WARNING] AI analysis failed: {e}")
         
         return self.basic_analysis(body)
     
@@ -556,7 +556,7 @@ Generate the email response:"""
                 return response.text.strip()
                 
         except Exception as e:
-            print(f"⚠️ Response generation failed: {e}")
+            print(f"[WARNING] Response generation failed: {e}")
         
         return self.template_response(analysis)
     
@@ -599,7 +599,7 @@ Generate the email response:"""
             print(f"📝 Logged negotiation with {buyer_email}")
             
         except Exception as e:
-            print(f"⚠️ Failed to log negotiation: {e}")
+            print(f"[WARNING] Failed to log negotiation: {e}")
 
 class VoiceAssistantAgent:
     """LiveKit-powered voice assistant for frontend"""
@@ -677,7 +677,7 @@ class VoiceAssistantAgent:
             self.system.supabase.table('voice_interactions').insert(interaction_data).execute()
             
         except Exception as e:
-            print(f"⚠️ Failed to log voice interaction: {e}")
+            print(f"[WARNING] Failed to log voice interaction: {e}")
 
 # Initialize the system
 agent_system = DeclutteredAgentSystem()
@@ -864,7 +864,7 @@ def get_demo_data():
 if __name__ == '__main__':
     print("🤖 Decluttered.ai AgentMail + LiveKit Integration - PRODUCTION")
     print("=" * 75)
-    print("📧 AgentMail Integration:")
+    print("[EMAIL] AgentMail Integration:")
     print("   • Official AgentMail SDK for email infrastructure")  
     print("   • Real agent inboxes with dedicated domains")
     print("   • WebSocket email notifications")
@@ -876,7 +876,7 @@ if __name__ == '__main__':
     print("   • Function tools for marketplace actions")
     print("   • WebRTC voice sessions")
     print()
-    print("🌐 API Endpoints:")
+    print("[GLOBE] API Endpoints:")
     print("   • Health: GET /health")
     print("   • Voice Session: POST /api/voice/session") 
     print("   • Voice Query: POST /api/voice/query")
@@ -887,9 +887,9 @@ if __name__ == '__main__':
     print("   • voice_query → voice_response")
     print("   • join_analytics_room for live updates")
     print()
-    print("🎯 Specialized AI Agents:")
+    print("[TARGET] Specialized AI Agents:")
     for agent_id, config in agent_system.agents.items():
-        status = "✅" if agent_id in agent_system.agent_inboxes else "⚠️"
+        status = "[OK]" if agent_id in agent_system.agent_inboxes else "[WARNING]"
         print(f"   {status} {config.name}: {config.username}@{config.domain}")
     print()
     print("⚙️  Required Environment Variables:")
@@ -898,11 +898,11 @@ if __name__ == '__main__':
     print("   • GEMINI_API_KEY (AI intelligence)")
     print("   • LIVEKIT_* keys (for voice features)")
     print()
-    print("🚀 READY FOR PRODUCTION HACKATHON DEMO!")
+    print("[ROCKET] READY FOR PRODUCTION HACKATHON DEMO!")
     
     try:
         socketio.run(app, debug=True, host='0.0.0.0', port=3005)
     except Exception as e:
-        print(f"❌ Server error: {e}")
+        print(f"[ERROR] Server error: {e}")
     finally:
-        print("🔥 AgentMail service stopped")
+        print("[FIRE] AgentMail service stopped")

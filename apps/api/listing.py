@@ -36,19 +36,19 @@ from webdriver_manager.chrome import ChromeDriverManager
 try:
     import requests
     EBAY_AVAILABLE = True
-    print("✅ eBay API client available")
+    print("[OK] eBay API client available")
 except ImportError:
     EBAY_AVAILABLE = False
-    print("⚠️ eBay API client not available")
+    print("[WARNING] eBay API client not available")
 
 # Gemini for description generation
 try:
     import google.generativeai as genai
     GEMINI_AVAILABLE = True
-    print("✅ Gemini AI available for description generation")
+    print("[OK] Gemini AI available for description generation")
 except ImportError:
     GEMINI_AVAILABLE = False
-    print("⚠️ Gemini AI not available")
+    print("[WARNING] Gemini AI not available")
 
 app = Flask(__name__)
 CORS(app)
@@ -63,7 +63,7 @@ class MarketplaceLister:
         self.gemini_client = None  # Ensure attribute always exists
         self.setup_gemini()
         self.setup_ebay()
-        print("🚀 Marketplace Lister initialized")
+        print("[ROCKET] Marketplace Lister initialized")
     
 
     def setup_gemini(self):
@@ -81,23 +81,23 @@ class MarketplaceLister:
                 # Test model
                 try:
                     _ = self.gemini_model.generate_content("Test")
-                    print(f"✅ Gemini AI configured successfully: {key[:8]}...")
+                    print(f"[OK] Gemini AI configured successfully: {key[:8]}...")
                     return
                 except Exception as e:
-                    print(f"⚠️ Gemini model error: {e}")
+                    print(f"[WARNING] Gemini model error: {e}")
                     print("Listing available models:")
                     try:
                         models = genai.list_models()
                         print(models)
                     except Exception as e2:
-                        print(f"⚠️ Could not list models: {e2}")
+                        print(f"[WARNING] Could not list models: {e2}")
                     return
             except Exception as e:
-                print(f"⚠️ Gemini key failed {key[:8]}...: {e}")
+                print(f"[WARNING] Gemini key failed {key[:8]}...: {e}")
                 self.gemini_model = None
                 return
 
-        print("⚠️ No working Gemini API key found")
+        print("[WARNING] No working Gemini API key found")
         self.gemini_model = None
     
     def setup_ebay(self):
@@ -112,17 +112,17 @@ class MarketplaceLister:
         }
         
         if self.ebay_config['app_id']:
-            print(f"✅ eBay API configured: {self.ebay_config['app_id'][:8]}...")
+            print(f"[OK] eBay API configured: {self.ebay_config['app_id'][:8]}...")
         else:
-            print("⚠️ eBay API not configured - add credentials to .env")
+            print("[WARNING] eBay API not configured - add credentials to .env")
     
     def start_browser(self, headless=False):
         """Start Chrome browser with anti-detection settings"""
         try:
-            print("🌐 Starting Chrome browser for Facebook...")
+            print("[GLOBE] Starting Chrome browser for Facebook...")
             if not os.path.exists(self.profile_path):
                 os.makedirs(self.profile_path)
-                print(f"📁 Created profile directory: {self.profile_path}")
+                print(f"[FOLDER] Created profile directory: {self.profile_path}")
 
             options = Options()
             # Anti-detection settings (same as scraper.py)
@@ -155,11 +155,11 @@ class MarketplaceLister:
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
 
-            print("✅ Chrome browser started successfully")
+            print("[OK] Chrome browser started successfully")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to start browser: {e}")
+            print(f"[ERROR] Failed to start browser: {e}")
             return False
     
     def check_facebook_login(self) -> bool:
@@ -177,21 +177,21 @@ class MarketplaceLister:
                 "login" not in current_url and 
                 ("marketplace" in page_title or "create" in current_url)):
                 
-                print("✅ Facebook login confirmed")
+                print("[OK] Facebook login confirmed")
                 self.facebook_logged_in = True
                 return True
             
-            print("🔐 Facebook login required")
+            print("[LOCK] Facebook login required")
             return False
             
         except Exception as e:
-            print(f"❌ Error checking Facebook login: {e}")
+            print(f"[ERROR] Error checking Facebook login: {e}")
             return False
     
     def facebook_login_flow(self) -> bool:
         """Interactive Facebook login process"""
         try:
-            print("\n🔐 FACEBOOK LOGIN REQUIRED")
+            print("\n[LOCK] FACEBOOK LOGIN REQUIRED")
             print("=" * 60)
             print("Facebook Marketplace requires authentication to create listings.")
             print("This is a ONE-TIME setup - your login will be saved.")
@@ -221,16 +221,88 @@ class MarketplaceLister:
                     return True
                 
                 if attempt < 2:
-                    print("⚠️ Login not detected, please check the browser window")
+                    print("[WARNING] Login not detected, please check the browser window")
                     time.sleep(3)
             
-            print("❌ Facebook login verification failed")
+            print("[ERROR] Facebook login verification failed")
             return False
             
         except Exception as e:
-            print(f"❌ Facebook login process failed: {e}")
+            print(f"[ERROR] Facebook login process failed: {e}")
             return False
     
+    def handle_facebook_confirmation_dialogs(self) -> bool:
+        """Handle various Facebook confirmation dialogs that might appear"""
+        try:
+            print("🔍 Checking for Facebook confirmation dialogs...")
+            
+            # Common Facebook confirmation dialogs and their buttons
+            dialog_patterns = [
+                {
+                    'name': 'Leave Page',
+                    'selectors': [
+                        "//div[@aria-label='Leave Page']",
+                        "//span[text()='Leave Page']/ancestor::div[@role='button']",
+                        "//div[@role='button' and .//span[text()='Leave Page']]"
+                    ]
+                },
+                {
+                    'name': 'Continue',
+                    'selectors': [
+                        "//div[@aria-label='Continue']",
+                        "//span[text()='Continue']/ancestor::div[@role='button']",
+                        "//button[text()='Continue']"
+                    ]
+                },
+                {
+                    'name': 'Confirm',
+                    'selectors': [
+                        "//div[@aria-label='Confirm']",
+                        "//span[text()='Confirm']/ancestor::div[@role='button']",
+                        "//button[text()='Confirm']"
+                    ]
+                },
+                {
+                    'name': 'OK',
+                    'selectors': [
+                        "//div[@aria-label='OK']",
+                        "//span[text()='OK']/ancestor::div[@role='button']",
+                        "//button[text()='OK']"
+                    ]
+                }
+            ]
+            
+            for dialog in dialog_patterns:
+                for selector in dialog['selectors']:
+                    try:
+                        elements = self.driver.find_elements(By.XPATH, selector)
+                        for element in elements:
+                            if element.is_displayed() and element.is_enabled():
+                                print(f"[OK] Found '{dialog['name']}' dialog button")
+                                try:
+                                    element.click()
+                                    print(f"[OK] Successfully clicked '{dialog['name']}' button")
+                                    time.sleep(2)
+                                    return True
+                                except Exception:
+                                    try:
+                                        self.driver.execute_script("arguments[0].click();", element)
+                                        print(f"[OK] Successfully clicked '{dialog['name']}' button with JavaScript")
+                                        time.sleep(2)
+                                        return True
+                                    except Exception as e:
+                                        print(f"[WARNING] Failed to click '{dialog['name']}' button: {e}")
+                                        continue
+                    except Exception:
+                        continue
+            
+            print("📝 No confirmation dialogs found")
+            return False
+            
+        except Exception as e:
+            print(f"[ERROR] Error handling confirmation dialogs: {e}")
+            return False
+
     def ensure_facebook_access(self) -> bool:
         """Ensure Facebook access (login if needed)"""
         if not self.driver:
@@ -290,7 +362,7 @@ Guidelines:
                 return description
 
         except Exception as e:
-            print(f"⚠️ Description generation failed: {e}")
+            print(f"[WARNING] Description generation failed: {e}")
             # Fallback description
             return f"{product_name} in {condition} condition. Well-maintained and ready for a new owner. Message me if interested!"
     
@@ -327,14 +399,14 @@ Guidelines:
             return round(optimal, 2)
             
         except Exception as e:
-            print(f"⚠️ Price calculation failed: {e}")
+            print(f"[WARNING] Price calculation failed: {e}")
             return 50.0
     
     def _handle_nested_category_selection(self, listing_data: Dict, depth: int = 0, max_depth: int = 3):
         """Recursively handle nested category selection until no more dropdowns appear"""
         try:
             if depth >= max_depth:
-                print(f"⚠️ Maximum category depth ({max_depth}) reached")
+                print(f"[WARNING] Maximum category depth ({max_depth}) reached")
                 return
             
             print(f"🔄 Checking for category level {depth + 1}...")
@@ -361,9 +433,9 @@ Guidelines:
                     time.sleep(0.5)
                     dropdown.click()
                     time.sleep(2)
-                    print(f"✅ Opened new category dropdown at level {depth + 1}")
+                    print(f"[OK] Opened new category dropdown at level {depth + 1}")
                 except Exception as e:
-                    print(f"⚠️ Failed to click new dropdown: {e}")
+                    print(f"[WARNING] Failed to click new dropdown: {e}")
             
             # Get current category options that might have appeared at this level
             category_options = []
@@ -452,7 +524,7 @@ Guidelines:
                     potential_categories.append((span, text))
             
             if not potential_categories:
-                print(f"✅ No more category levels found at depth {depth + 1}")
+                print(f"[OK] No more category levels found at depth {depth + 1}")
                 return
             
             print(f"Found {len(potential_categories)} potential category options at level {depth + 1}: {[text for _, text in potential_categories[:8]]}")
@@ -541,10 +613,10 @@ Guidelines:
                     # Try clicking
                     try:
                         span.click()
-                        print(f"✅ Selected category at level {depth + 1}: '{text}'")
+                        print(f"[OK] Selected category at level {depth + 1}: '{text}'")
                     except Exception:
                         self.driver.execute_script("arguments[0].click();", span)
-                        print(f"✅ Selected category at level {depth + 1} with JS: '{text}'")
+                        print(f"[OK] Selected category at level {depth + 1} with JS: '{text}'")
                     
                     time.sleep(2)
                     
@@ -552,12 +624,12 @@ Guidelines:
                     self._handle_nested_category_selection(listing_data, depth + 1, max_depth)
                     
                 except Exception as e:
-                    print(f"⚠️ Failed to click category '{text}' at level {depth + 1}: {e}")
+                    print(f"[WARNING] Failed to click category '{text}' at level {depth + 1}: {e}")
             else:
-                print(f"✅ No suitable category found at level {depth + 1}, stopping recursion")
+                print(f"[OK] No suitable category found at level {depth + 1}, stopping recursion")
                 
         except Exception as e:
-            print(f"⚠️ Error in nested category selection at depth {depth}: {e}")
+            print(f"[WARNING] Error in nested category selection at depth {depth}: {e}")
 
     def create_facebook_listing(self, listing_data: Dict) -> Dict:
         """Create Facebook Marketplace listing using Selenium with exact selectors"""
@@ -598,7 +670,7 @@ Guidelines:
                 price_field.clear()
                 price_field.send_keys(str(int(listing_data['price'])))
             except Exception as e:
-                print(f"⚠️ Could not find or fill price field: {e}")
+                print(f"[WARNING] Could not find or fill price field: {e}")
             
             # Category - use Gemini API to predict best category/subcategory
             try:
@@ -626,13 +698,13 @@ Guidelines:
                             elements = self.driver.find_elements(By.XPATH, selector)
                             if elements:
                                 category_button = elements[0]
-                                print(f"✅ Found category button with selector {i+1}: {selector}")
+                                print(f"[OK] Found category button with selector {i+1}: {selector}")
                                 break
                         except Exception:
                             continue
                     
                     if not category_button:
-                        print("⚠️ Could not find category button with any selector")
+                        print("[WARNING] Could not find category button with any selector")
                         # Try to find any clickable element with "Category" text
                         try:
                             category_elements = self.driver.find_elements(By.XPATH, "//span[text()='Category']")
@@ -642,7 +714,7 @@ Guidelines:
                                     parent = elem.find_element(By.XPATH, "./..")
                                     if parent.tag_name in ['label', 'div', 'button']:
                                         category_button = parent
-                                        print("✅ Found category button by traversing from text element")
+                                        print("[OK] Found category button by traversing from text element")
                                         break
                         except Exception:
                             pass
@@ -657,17 +729,17 @@ Guidelines:
                     # Try multiple click methods
                     try:
                         category_button.click()
-                        print("✅ Clicked category button with standard click")
+                        print("[OK] Clicked category button with standard click")
                     except Exception:
                         try:
                             self.driver.execute_script("arguments[0].click();", category_button)
-                            print("✅ Clicked category button with JavaScript click")
+                            print("[OK] Clicked category button with JavaScript click")
                         except Exception:
                             # Find any input field inside and click it
                             try:
                                 input_field = category_button.find_element(By.XPATH, ".//input")
                                 input_field.click()
-                                print("✅ Clicked input field inside category button")
+                                print("[OK] Clicked input field inside category button")
                             except Exception:
                                 raise Exception("Could not click category button")
                     
@@ -680,28 +752,28 @@ Guidelines:
                         dropdown_options = self.driver.find_elements(By.XPATH, "//div[contains(@role, 'option') or contains(@class, 'menu') or contains(@class, 'dropdown')]//span[contains(text(), 'Electronics') or contains(text(), 'Antiques') or contains(text(), 'Arts') or contains(text(), 'Vehicle') or contains(text(), 'Mobile')]")
                         if dropdown_options:
                             dropdown_opened = True
-                            print(f"✅ Dropdown opened - found {len(dropdown_options)} category options")
+                            print(f"[OK] Dropdown opened - found {len(dropdown_options)} category options")
                         else:
                             # Alternative check - look for any list of options that appeared
                             all_options = self.driver.find_elements(By.XPATH, "//div[contains(@style, 'position') or contains(@role, 'listbox')]//span")
                             visible_options = [opt for opt in all_options if opt.is_displayed() and opt.text.strip()]
                             if len(visible_options) > 5:  # If we see many options, dropdown probably opened
                                 dropdown_opened = True
-                                print(f"✅ Dropdown likely opened - found {len(visible_options)} visible options")
+                                print(f"[OK] Dropdown likely opened - found {len(visible_options)} visible options")
                     except Exception as e:
                         print(f"Could not verify dropdown status: {e}")
                     
                     if not dropdown_opened:
-                        print("⚠️ Dropdown may not have opened, trying alternative approach")
+                        print("[WARNING] Dropdown may not have opened, trying alternative approach")
                         # Try typing in the category field to trigger dropdown
                         try:
                             input_field = category_button.find_element(By.XPATH, ".//input")
                             input_field.clear()
                             input_field.send_keys(fb_category[:3])  # Type first 3 letters to trigger dropdown
                             time.sleep(2)
-                            print(f"✅ Typed '{fb_category[:3]}' to trigger dropdown")
+                            print(f"[OK] Typed '{fb_category[:3]}' to trigger dropdown")
                         except Exception:
-                            print("⚠️ Could not type in category field either")
+                            print("[WARNING] Could not type in category field either")
 
                     # Refresh elements to avoid stale references and get real category options
                     time.sleep(1)  # Let DOM settle
@@ -753,7 +825,7 @@ Guidelines:
                     print(f"Found {len(category_options)} category options: {[text for _, text in category_options[:10]]}")
                     
                     if not category_options:
-                        print("⚠️ No category options found")
+                        print("[WARNING] No category options found")
                         raise Exception("No category options available")
                     
                     # Use Gemini to pick the best option from what's actually available
@@ -806,27 +878,27 @@ Guidelines:
                             
                             # Try clicking
                             span.click()
-                            print(f"✅ Selected category: '{text}'")
+                            print(f"[OK] Selected category: '{text}'")
                             time.sleep(2)
                         except Exception as e:
                             print(f"Failed to click category '{text}': {e}")
                             # Try JavaScript click as fallback
                             try:
                                 self.driver.execute_script("arguments[0].click();", span)
-                                print(f"✅ Selected category with JS click: '{text}'")
+                                print(f"[OK] Selected category with JS click: '{text}'")
                                 time.sleep(2)
                             except Exception as e2:
                                 print(f"Failed JS click too: {e2}")
                     else:
-                        print("⚠️ Could not find a suitable category to select")
+                        print("[WARNING] Could not find a suitable category to select")
 
                     # Handle nested category selection (can be n-levels deep)
                     self._handle_nested_category_selection(listing_data)
                     
                 except Exception as e:
-                    print(f"⚠️ Could not select category/subcategory: {e}")
+                    print(f"[WARNING] Could not select category/subcategory: {e}")
             except Exception as e:
-                print(f"⚠️ Could not select category/subcategory: {e}")
+                print(f"[WARNING] Could not select category/subcategory: {e}")
             
             # Condition - handle the dropdown properly with better element detection
             try:
@@ -847,7 +919,7 @@ Guidelines:
                         elements = self.driver.find_elements(By.XPATH, selector)
                         if elements:
                             condition_dropdown = elements[0]
-                            print(f"✅ Found condition dropdown with selector: {selector}")
+                            print(f"[OK] Found condition dropdown with selector: {selector}")
                             break
                     except:
                         continue
@@ -860,13 +932,13 @@ Guidelines:
                     # Try clicking with different methods
                     try:
                         condition_dropdown.click()
-                        print("✅ Clicked condition dropdown")
+                        print("[OK] Clicked condition dropdown")
                     except Exception:
                         try:
                             self.driver.execute_script("arguments[0].click();", condition_dropdown)
-                            print("✅ Clicked condition dropdown with JS")
+                            print("[OK] Clicked condition dropdown with JS")
                         except Exception:
-                            print("⚠️ Could not click condition dropdown")
+                            print("[WARNING] Could not click condition dropdown")
                             raise Exception("Condition dropdown click failed")
                     
                     time.sleep(2)
@@ -889,14 +961,14 @@ Guidelines:
                             EC.element_to_be_clickable((By.XPATH, f"//span[text()='{fb_condition}']"))
                         )
                         condition_option.click()
-                        print(f"✅ Selected condition: {fb_condition}")
+                        print(f"[OK] Selected condition: {fb_condition}")
                     except TimeoutException:
-                        print(f"⚠️ Could not find condition option: {fb_condition}")
+                        print(f"[WARNING] Could not find condition option: {fb_condition}")
                 else:
-                    print("⚠️ Could not find condition dropdown")
+                    print("[WARNING] Could not find condition dropdown")
                 
             except Exception as e:
-                print(f"⚠️ Could not set condition: {e}")
+                print(f"[WARNING] Could not set condition: {e}")
             
             # Description - using the textarea structure you provided
             try:
@@ -919,11 +991,11 @@ Guidelines:
                     file_input = self.driver.find_element(By.CSS_SELECTOR, "input[type='file']")
                     file_input.send_keys(image_path)
                     time.sleep(2)  # Wait for upload
-                    print(f"✅ Uploaded image: {image_path}")
+                    print(f"[OK] Uploaded image: {image_path}")
                 except Exception as e:
-                    print(f"⚠️ Could not upload photo: {e}")
+                    print(f"[WARNING] Could not upload photo: {e}")
             else:
-                print("⚠️ No image found in Downloads folder to upload.")
+                print("[WARNING] No image found in Downloads folder to upload.")
 
             # Click the publish button to complete the listing
             try:
@@ -947,11 +1019,59 @@ Guidelines:
                 
                 try:
                     publish_button.click()
-                    print("✅ Clicked Publish button!")
+                    print("[OK] Clicked Publish button!")
                     time.sleep(3)  # Wait for publish to process
+                    
+                    # Handle "Leave Page?" confirmation dialog if it appears
+                    try:
+                        print("🔍 Checking for 'Leave Page?' confirmation dialog...")
+                        
+                        # Look for the "Leave Page" button with specific selectors
+                        leave_page_selectors = [
+                            "//div[@aria-label='Leave Page']",
+                            "//div[contains(@class, 'x1i10hfl') and @aria-label='Leave Page']",
+                            "//span[text()='Leave Page']/ancestor::div[@role='button']",
+                            "//span[contains(text(), 'Leave Page')]/ancestor::div[@role='button']",
+                            "//div[@role='button' and .//span[text()='Leave Page']]"
+                        ]
+                        
+                        leave_page_button = None
+                        for selector in leave_page_selectors:
+                            try:
+                                elements = self.driver.find_elements(By.XPATH, selector)
+                                if elements and elements[0].is_displayed():
+                                    leave_page_button = elements[0]
+                                    print(f"[OK] Found 'Leave Page' button with selector: {selector}")
+                                    break
+                            except Exception:
+                                continue
+                        
+                        if leave_page_button:
+                            print("🖱️ Clicking 'Leave Page' to continue...")
+                            try:
+                                leave_page_button.click()
+                                print("[OK] Successfully clicked 'Leave Page' button")
+                                time.sleep(2)
+                            except Exception:
+                                try:
+                                    self.driver.execute_script("arguments[0].click();", leave_page_button)
+                                    print("[OK] Successfully clicked 'Leave Page' button with JavaScript")
+                                    time.sleep(2)
+                                except Exception as e:
+                                    print(f"[WARNING] Failed to click 'Leave Page' button: {e}")
+                        else:
+                            print("📝 No 'Leave Page' dialog found, continuing...")
+                            
+                    except Exception as e:
+                        print(f"[WARNING] Error handling 'Leave Page' dialog: {e}")
+                    
+                    time.sleep(2)  # Additional wait after handling dialog
                     
                     # Check if listing was successfully published
                     try:
+                        # First, handle any remaining confirmation dialogs
+                        self.handle_facebook_confirmation_dialogs()
+                        
                         # Look for success indicators or redirect to marketplace
                         current_url = self.driver.current_url
                         if 'marketplace' in current_url and 'create' not in current_url:
@@ -965,6 +1085,8 @@ Guidelines:
                         else:
                             # Wait a bit more and check again
                             time.sleep(3)
+                            # Handle any additional dialogs that might appear
+                            self.handle_facebook_confirmation_dialogs()
                             current_url = self.driver.current_url
                             return {
                                 'success': True,
@@ -974,6 +1096,8 @@ Guidelines:
                                 'current_url': current_url
                             }
                     except Exception as e:
+                        # Try to handle any dialogs one more time
+                        self.handle_facebook_confirmation_dialogs()
                         return {
                             'success': True,
                             'platform': 'facebook',
@@ -985,7 +1109,7 @@ Guidelines:
                     # Try JavaScript click as fallback
                     try:
                         self.driver.execute_script("arguments[0].click();", publish_button)
-                        print("✅ Clicked Publish button with JavaScript!")
+                        print("[OK] Clicked Publish button with JavaScript!")
                         time.sleep(3)
                         
                         return {
@@ -995,7 +1119,7 @@ Guidelines:
                             'message': 'Facebook listing published successfully with JS click!'
                         }
                     except Exception as e2:
-                        print(f"⚠️ Failed to click publish button: {e2}")
+                        print(f"[WARNING] Failed to click publish button: {e2}")
                         return {
                             'success': True,
                             'platform': 'facebook',
@@ -1004,7 +1128,7 @@ Guidelines:
                         }
                         
             except TimeoutException:
-                print("⚠️ Could not find publish button")
+                print("[WARNING] Could not find publish button")
                 return {
                     'success': True,
                     'platform': 'facebook',
@@ -1013,7 +1137,7 @@ Guidelines:
                 }
             
         except Exception as e:
-            print(f"❌ Facebook listing creation failed: {e}")
+            print(f"[ERROR] Facebook listing creation failed: {e}")
             return {'error': f'Facebook listing failed: {str(e)}', 'platform': 'facebook'}
     
     def create_ebay_listing(self, listing_data: Dict) -> Dict:
@@ -1169,7 +1293,7 @@ Guidelines:
                 }
             
         except Exception as e:
-            print(f"❌ eBay listing creation failed: {e}")
+            print(f"[ERROR] eBay listing creation failed: {e}")
             return {'error': f'eBay listing failed: {str(e)}', 'platform': 'ebay'}
     
     def create_listings(self, product_data: Dict, pricing_data: Dict, platforms: List[str]) -> Dict:
@@ -1216,7 +1340,7 @@ Guidelines:
         try:
             from facebook_monitor import FacebookMessageMonitor
             
-            print("🚀 Starting Facebook message monitoring...")
+            print("[ROCKET] Starting Facebook message monitoring...")
             
             monitor = FacebookMessageMonitor()
             monitor.lister = self  # Use this lister's browser session
@@ -1226,11 +1350,11 @@ Guidelines:
             monitor_thread.daemon = True  # Dies when main program exits
             monitor_thread.start()
             
-            print("✅ Facebook message monitor started in background")
+            print("[OK] Facebook message monitor started in background")
             return monitor
             
         except Exception as e:
-            print(f"❌ Failed to start message monitor: {e}")
+            print(f"[ERROR] Failed to start message monitor: {e}")
             return None
     
     def close(self):
@@ -1238,7 +1362,7 @@ Guidelines:
         if self.driver:
             try:
                 self.driver.quit()
-                print("🔥 Browser closed")
+                print("[FIRE] Browser closed")
             except:
                 pass
 
@@ -1371,7 +1495,7 @@ def create_listings():
         })
     
     except Exception as e:
-        print(f"❌ API error: {e}")
+        print(f"[ERROR] API error: {e}")
         return jsonify({
             'ok': False,
             'error_code': 'INTERNAL_ERROR',
@@ -1482,18 +1606,18 @@ def get_monitor_status():
 # === MAIN ===
 
 if __name__ == '__main__':
-    print("🛒 Marketplace Listing API v1.0")
+    print("[CART] Marketplace Listing API v1.0")
     print("=" * 50)
-    print("🌐 Server: http://localhost:3003")
+    print("[GLOBE] Server: http://localhost:3003")
     print("📝 Create Listings: POST /api/listings/create")
     print("📘 Facebook Only: POST /api/listings/facebook")  
     print("📙 eBay Only: POST /api/listings/ebay")
-    print("🔐 FB Login: POST /api/facebook/login")
-    print("📱 Start Monitor: POST /api/facebook/start-monitoring")
-    print("📊 Monitor Status: GET /api/facebook/monitor-status")
+    print("[LOCK] FB Login: POST /api/facebook/login")
+    print("[PHONE] Start Monitor: POST /api/facebook/start-monitoring")
+    print("[CHART] Monitor Status: GET /api/facebook/monitor-status")
     print("❤️  Health: GET /health")
     print()
-    print("✨ Features:")
+    print("[SPARKLES] Features:")
     print("  - Facebook Marketplace automation (Selenium)")
     print("  - eBay API integration for listings")
     print("  - AI-generated descriptions (Gemini)")
@@ -1507,11 +1631,11 @@ if __name__ == '__main__':
     print("  2. Run Facebook login on first use")
     print("  3. Integrate with image recognition & price scraper")
     print("  4. Start Facebook message monitoring")
-    print("🚀 Ready for hackathon!")
+    print("[ROCKET] Ready for hackathon!")
     
     try:
         app.run(debug=True, host='0.0.0.0', port=3003)
     except Exception as e:
-        print(f"❌ Server error: {e}")
+        print(f"[ERROR] Server error: {e}")
     finally:
         lister.close()

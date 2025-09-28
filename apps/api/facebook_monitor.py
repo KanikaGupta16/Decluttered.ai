@@ -25,10 +25,10 @@ from scraper import MarketplaceScraper
 try:
     from agentmail import AgentMail
     AGENTMAIL_AVAILABLE = True
-    print("✅ AgentMail library available")
+    print("[OK] AgentMail library available")
 except ImportError:
     AGENTMAIL_AVAILABLE = False
-    print("⚠️ AgentMail not installed - using console output")
+    print("[WARNING] AgentMail not installed - using console output")
 
 class FacebookMessageMonitor:
     def __init__(self):
@@ -48,12 +48,12 @@ class FacebookMessageMonitor:
             # Check if API key is available
             api_key = os.getenv('AGENTMAIL_API_KEY')
             if not api_key:
-                print("⚠️ AGENTMAIL_API_KEY not found in environment variables")
+                print("[WARNING] AGENTMAIL_API_KEY not found in environment variables")
                 return
                 
             if api_key.startswith('am_42a33a4de15884a10d84785f54ffa4fe75eb04f6ec86555ae9cdb88e04d84f82'):
-                print("⚠️ Please replace the placeholder AGENTMAIL_API_KEY in .env with your actual API key")
-                print("💡 Get your API key from: https://agentmail.com/dashboard")
+                print("[WARNING] Please replace the placeholder AGENTMAIL_API_KEY in .env with your actual API key")
+                print("[BULB] Get your API key from: https://agentmail.com/dashboard")
                 return
             
             print(f"🔑 Using AgentMail API key: {api_key[:8]}...")
@@ -62,19 +62,19 @@ class FacebookMessageMonitor:
                 username="fb-messages",
                 domain="decluttered.ai"
             )
-            print(f"✅ AgentMail inbox created: {self.monitor_inbox.username}@decluttered.ai")
+            print(f"[OK] AgentMail inbox created: {self.monitor_inbox.username}@decluttered.ai")
         except Exception as e:
-            print(f"⚠️ AgentMail setup failed: {e}")
-            print("💡 Make sure your AGENTMAIL_API_KEY is correct in .env file")
+            print(f"[WARNING] AgentMail setup failed: {e}")
+            print("[BULB] Make sure your AGENTMAIL_API_KEY is correct in .env file")
             self.agentmail = None
 
     def start_monitoring(self):
         """Start the Facebook message monitoring loop"""
-        print("🚀 Starting Facebook Message Monitor...")
+        print("[ROCKET] Starting Facebook Message Monitor...")
         
         # Ensure Facebook access using existing scraper logic
         if not self.scraper.ensure_facebook_access():
-            print("❌ Facebook access failed")
+            print("[ERROR] Facebook access failed")
             return False
             
         self.running = True
@@ -98,7 +98,7 @@ class FacebookMessageMonitor:
                     time.sleep(1)
                     
             except Exception as e:
-                print(f"❌ Monitor error: {e}")
+                print(f"[ERROR] Monitor error: {e}")
                 print("⏳ Waiting 60 seconds before retry...")
                 time.sleep(60)
                 
@@ -139,7 +139,7 @@ class FacebookMessageMonitor:
                                 not text.endswith('...') and
                                 text != item_preview[:50]):
                                 
-                                print(f"   ✅ Found real message: {text}")
+                                print(f"   [OK] Found real message: {text}")
                                 return text
                     except:
                         continue
@@ -147,11 +147,11 @@ class FacebookMessageMonitor:
                 return "Could not extract message content"
                 
             except Exception as e:
-                print(f"   ⚠️ Could not click into conversation: {e}")
+                print(f"   [WARNING] Could not click into conversation: {e}")
                 return f"New message from {buyer_name}"
                 
         except Exception as e:
-            print(f"   ❌ Message extraction failed: {e}")
+            print(f"   [ERROR] Message extraction failed: {e}")
             return f"Activity from {buyer_name}"
 
     def check_facebook_inbox(self):
@@ -266,16 +266,16 @@ class FacebookMessageMonitor:
                             if is_unread:
                                 print(f"   🔴 UNREAD MESSAGE from {buyer_name}!")
                         else:
-                            print(f"   ✅ Already seen: {buyer_name}")
+                            print(f"   [OK] Already seen: {buyer_name}")
                     
                 except Exception as e:
-                    print(f"   ⚠️ Error processing container: {e}")
+                    print(f"   [WARNING] Error processing container: {e}")
                     continue
             
             return new_messages
             
         except Exception as e:
-            print(f"❌ Inbox extraction failed: {e}")
+            print(f"[ERROR] Inbox extraction failed: {e}")
             return []
 
     def is_new_conversation(self, conv_id, preview_text):
@@ -303,7 +303,7 @@ class FacebookMessageMonitor:
             # Get buyer name - try multiple strategies
             buyer_name = "Unknown"
             
-            print("👤 Looking for buyer name...")
+            print("[USER] Looking for buyer name...")
             
             # Strategy 1: Look for profile names in various locations
             buyer_selectors = [
@@ -327,18 +327,18 @@ class FacebookMessageMonitor:
                             not text.startswith('$') and 
                             'listing' not in text.lower()):
                             buyer_name = text
-                            print(f"   ✅ Using buyer name: {buyer_name}")
+                            print(f"   [OK] Using buyer name: {buyer_name}")
                             break
                     if buyer_name != "Unknown":
                         break
                 except Exception as e:
-                    print(f"   ⚠️ Selector failed '{selector}': {e}")
+                    print(f"   [WARNING] Selector failed '{selector}': {e}")
                     continue
             
             # Get item title/reference - try finding the actual listing
             item_title = "Unknown Item"
             
-            print("📦 Looking for item title...")
+            print("[PACKAGE] Looking for item title...")
             
             item_selectors = [
                 'img[alt]:not([alt=""])',  # Images with alt text
@@ -364,13 +364,13 @@ class FacebookMessageMonitor:
                             ['headphones', 'phone', 'laptop', 'car', 'bike', 'furniture', 
                             'clothes', 'book', 'game', 'electronics', 'sony', 'apple', 'samsung']))):
                             item_title = text
-                            print(f"   ✅ Using item title: {item_title}")
+                            print(f"   [OK] Using item title: {item_title}")
                             break
                             
                     if item_title != "Unknown Item":
                         break
                 except Exception as e:
-                    print(f"   ⚠️ Selector failed '{selector}': {e}")
+                    print(f"   [WARNING] Selector failed '{selector}': {e}")
                     continue
             
             # Get latest message - focus on actual message bubbles
@@ -398,13 +398,13 @@ class FacebookMessageMonitor:
                             all_messages.append(text)
                             print(f"   Found message with '{selector}': '{text[:50]}...'")
                 except Exception as e:
-                    print(f"   ⚠️ Message selector failed '{selector}': {e}")
+                    print(f"   [WARNING] Message selector failed '{selector}': {e}")
                     continue
             
             if all_messages:
                 # Get the last few messages (most recent)
                 latest_message = all_messages[-1]  # Most recent
-                print(f"   ✅ Using latest message: {latest_message[:100]}...")
+                print(f"   [OK] Using latest message: {latest_message[:100]}...")
             
             # Create conversation ID
             conversation_id = f"{buyer_name}_{hash(item_title) % 10000}"
@@ -425,7 +425,7 @@ class FacebookMessageMonitor:
             return message_data
             
         except Exception as e:
-            print(f"❌ Data extraction failed: {e}")
+            print(f"[ERROR] Data extraction failed: {e}")
             return None
 
     def is_new_message(self, message_data):
@@ -450,10 +450,10 @@ class FacebookMessageMonitor:
         priority = "🔴 HIGH PRIORITY" if message_data.get('is_unread', False) else "📨 Normal"
         
         print(f"\n{priority} - PROCESSING MESSAGE:")
-        print(f"   👤 Buyer: {message_data['buyer_name']}")
-        print(f"   📦 Item: {message_data['item_title']}")
+        print(f"   [USER] Buyer: {message_data['buyer_name']}")
+        print(f"   [PACKAGE] Item: {message_data['item_title']}")
         print(f"   💬 Message: '{message_data['latest_message']}'")
-        print(f"   ⏰ Time: {message_data.get('fb_timestamp', 'unknown')}")
+        print(f"   [CLOCK] Time: {message_data.get('fb_timestamp', 'unknown')}")
         print(f"   📍 Status: {'UNREAD' if message_data.get('is_unread', False) else 'Read'}")
         
         if self.agentmail and self.monitor_inbox:
@@ -472,18 +472,18 @@ class FacebookMessageMonitor:
             
             email_body = f"""🚨 FACEBOOK MARKETPLACE MESSAGE {'(UNREAD!)' if message_data.get('is_unread', False) else ''}
 
-👤 BUYER: {message_data['buyer_name']}
-📦 ITEM: {message_data['item_title']}
+[USER] BUYER: {message_data['buyer_name']}
+[PACKAGE] ITEM: {message_data['item_title']}
 💬 MESSAGE: "{message_data['latest_message']}"
-⏰ TIME: {message_data.get('fb_timestamp', 'unknown')} ago
-📍 STATUS: {'🔴 UNREAD' if message_data.get('is_unread', False) else '✅ Read'}
+[CLOCK] TIME: {message_data.get('fb_timestamp', 'unknown')} ago
+📍 STATUS: {'🔴 UNREAD' if message_data.get('is_unread', False) else '[OK] Read'}
 
-🎯 QUICK ACTIONS:
+[TARGET] QUICK ACTIONS:
 - Respond immediately if unread
 - Check for price negotiation keywords
 - Assess buyer interest level
 
-📊 CONTEXT:
+[CHART] CONTEXT:
 Platform: Facebook Marketplace
 Detected: {message_data['timestamp']}
 Conversation ID: {message_data['conversation_id']}
@@ -502,11 +502,11 @@ Conversation ID: {message_data['conversation_id']}
                 text=email_body
             )
             
-            status = "✅ URGENT forwarded" if message_data.get('is_unread', False) else "✅ Forwarded"
+            status = "[OK] URGENT forwarded" if message_data.get('is_unread', False) else "[OK] Forwarded"
             print(f"   {status} to AgentMail")
             
         except Exception as e:
-            print(f"❌ AgentMail forward failed: {e}")
+            print(f"[ERROR] AgentMail forward failed: {e}")
 
     def log_to_console_enhanced(self, message_data):
         """Enhanced console logging with priority and context"""
@@ -516,15 +516,15 @@ Conversation ID: {message_data['conversation_id']}
         print("\n" + "="*60)
         print(f"{priority} FACEBOOK MARKETPLACE MESSAGE")
         print("="*60)
-        print(f"👤 Buyer: {message_data['buyer_name']}")
-        print(f"📦 Item: {message_data['item_title']}")
+        print(f"[USER] Buyer: {message_data['buyer_name']}")
+        print(f"[PACKAGE] Item: {message_data['item_title']}")
         print(f"💬 Message: \"{message_data['latest_message']}\"")
-        print(f"⏰ FB Time: {message_data.get('fb_timestamp', 'unknown')}")
+        print(f"[CLOCK] FB Time: {message_data.get('fb_timestamp', 'unknown')}")
         print(f"🕐 Detected: {message_data['timestamp']}")
-        print(f"📍 Status: {'🔴 UNREAD' if is_unread else '✅ Read'}")
+        print(f"📍 Status: {'🔴 UNREAD' if is_unread else '[OK] Read'}")
         print(f"🔗 URL: {message_data['url']}")
         if is_unread:
-            print("⚠️  ACTION REQUIRED: Respond to unread message!")
+            print("[WARNING]  ACTION REQUIRED: Respond to unread message!")
         print("="*60)
 
     def process_message(self, message_data):
@@ -571,10 +571,10 @@ Conversation URL: {message_data['url']}
                 text=email_body
             )
             
-            print("✅ Message forwarded to AgentMail")
+            print("[OK] Message forwarded to AgentMail")
             
         except Exception as e:
-            print(f"❌ AgentMail forward failed: {e}")
+            print(f"[ERROR] AgentMail forward failed: {e}")
 
     def log_to_console(self, message_data):
         """Log message to console (fallback when no AgentMail)"""
@@ -595,7 +595,7 @@ Conversation URL: {message_data['url']}
             with open(filename, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(message_data) + '\n')
         except Exception as e:
-            print(f"⚠️ File save failed: {e}")
+            print(f"[WARNING] File save failed: {e}")
 
     def stop_monitoring(self):
         """Stop the monitoring loop"""
@@ -610,7 +610,7 @@ def main():
     except KeyboardInterrupt:
         print("\n🛑 Stopping monitor...")
         monitor.stop_monitoring()
-        print("✅ Monitor stopped")
+        print("[OK] Monitor stopped")
 
 if __name__ == "__main__":
     main()

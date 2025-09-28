@@ -15,13 +15,13 @@ def check_api_running(url, service_name):
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
-            print(f"✅ {service_name} is running")
+            print(f"[OK] {service_name} is running")
             return True
         else:
-            print(f"❌ {service_name} returned status {response.status_code}")
+            print(f"[ERROR] {service_name} returned status {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ {service_name} is not running: {e}")
+        print(f"[ERROR] {service_name} is not running: {e}")
         return False
 
 def setup_image_recognition():
@@ -30,22 +30,22 @@ def setup_image_recognition():
     print("=" * 50)
     
     if not check_api_running("http://localhost:3001/health", "Image Recognition API"):
-        print("⚠️ Please start the Image Recognition API first:")
+        print("[WARNING] Please start the Image Recognition API first:")
         print("   python main.py")
         return False
     
     print("📷 Image Recognition API uses Google account cookies")
     print("🔄 The first image upload will handle Google login automatically")
-    print("✅ No manual setup needed!")
+    print("[OK] No manual setup needed!")
     return True
 
 def setup_facebook_login():
     """Setup Facebook login for marketplace scraping"""
-    print("\n🛒 STEP 2: Facebook Login Setup")
+    print("\n[CART] STEP 2: Facebook Login Setup")
     print("=" * 50)
     
     if not check_api_running("http://localhost:3002/health", "Price Scraper API"):
-        print("⚠️ Please start the Price Scraper API first:")
+        print("[WARNING] Please start the Price Scraper API first:")
         print("   python price_scraper.py")
         return False
     
@@ -55,13 +55,13 @@ def setup_facebook_login():
         if health_response.status_code == 200:
             health_data = health_response.json()
             if health_data.get('facebook_logged_in'):
-                print("✅ Facebook already logged in!")
+                print("[OK] Facebook already logged in!")
                 return True
     except:
         pass
     
-    print("🔐 Setting up Facebook login for marketplace access...")
-    print("⚠️  This is required - Facebook blocks anonymous marketplace browsing")
+    print("[LOCK] Setting up Facebook login for marketplace access...")
+    print("[WARNING]  This is required - Facebook blocks anonymous marketplace browsing")
     
     try:
         # Trigger Facebook login
@@ -71,17 +71,17 @@ def setup_facebook_login():
         if response.status_code == 200:
             result = response.json()
             if result.get('ok'):
-                print("✅ Facebook login setup complete!")
+                print("[OK] Facebook login setup complete!")
                 print("💾 Cookies saved for future use")
                 return True
             else:
-                print(f"❌ Facebook login failed: {result.get('message')}")
+                print(f"[ERROR] Facebook login failed: {result.get('message')}")
                 return False
         else:
-            print(f"❌ Login request failed: {response.status_code}")
+            print(f"[ERROR] Login request failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ Setup error: {e}")
+        print(f"[ERROR] Setup error: {e}")
         return False
 
 def test_both_apis():
@@ -90,7 +90,7 @@ def test_both_apis():
     print("=" * 50)
     
     # Test price scraping with known product
-    print("🛒 Testing price scraping...")
+    print("[CART] Testing price scraping...")
     
     try:
         price_payload = {
@@ -107,29 +107,29 @@ def test_both_apis():
                 comps = data.get('comps', [])
                 summary = data.get('summary', {})
                 
-                print(f"✅ Found {len(comps)} comparable listings")
+                print(f"[OK] Found {len(comps)} comparable listings")
                 if summary.get('avg'):
-                    print(f"💰 Average price: ${summary['avg']}")
-                    print(f"📊 Price range: ${summary.get('min', 'N/A')}-${summary.get('max', 'N/A')}")
+                    print(f"[MONEY] Average price: ${summary['avg']}")
+                    print(f"[CHART] Price range: ${summary.get('min', 'N/A')}-${summary.get('max', 'N/A')}")
                 
                 platform_counts = summary.get('count_by_platform', {})
-                print(f"🛒 By platform: {platform_counts}")
+                print(f"[CART] By platform: {platform_counts}")
                 
                 return True
             else:
-                print(f"❌ Price scraping failed: {result.get('message')}")
+                print(f"[ERROR] Price scraping failed: {result.get('message')}")
                 return False
         else:
-            print(f"❌ Price API returned status {response.status_code}")
+            print(f"[ERROR] Price API returned status {response.status_code}")
             return False
     
     except Exception as e:
-        print(f"❌ Testing error: {e}")
+        print(f"[ERROR] Testing error: {e}")
         return False
 
 def main():
     """Main setup process"""
-    print("🚀 Decluttered.ai Price APIs Setup")
+    print("[ROCKET] Decluttered.ai Price APIs Setup")
     print("This will configure Google and Facebook logins for automated price scraping")
     print("=" * 70)
     
@@ -140,7 +140,7 @@ def main():
     price_api_running = check_api_running("http://localhost:3002/health", "Price Scraper API")
     
     if not image_api_running or not price_api_running:
-        print("\n❌ Setup cannot continue - both APIs must be running")
+        print("\n[ERROR] Setup cannot continue - both APIs must be running")
         print("\nTo start the APIs:")
         print("Terminal 1: python main.py              # Image Recognition (port 3001)")
         print("Terminal 2: python price_scraper.py     # Price Scraping (port 3002)")
@@ -167,15 +167,15 @@ def main():
     
     if steps_completed == 3:
         print("🎉 SETUP COMPLETE!")
-        print("✅ Both APIs are configured and working")
-        print("🚀 Ready for production use!")
+        print("[OK] Both APIs are configured and working")
+        print("[ROCKET] Ready for production use!")
         
         print("\n📝 Usage:")
         print("1. Upload image → Image Recognition API identifies product")
         print("2. Use product name → Price Scraper API gets market data")
         print("3. Show user suggested listing price")
         
-        print("\n💡 Integration tips:")
+        print("\n[BULB] Integration tips:")
         print("- Image recognition: ~5-10 seconds")
         print("- Price scraping: ~15-30 seconds") 
         print("- Consider async processing for better UX")
@@ -183,7 +183,7 @@ def main():
         
         return True
     else:
-        print("⚠️ Setup incomplete - please resolve the issues above")
+        print("[WARNING] Setup incomplete - please resolve the issues above")
         return False
 
 if __name__ == "__main__":
@@ -197,13 +197,13 @@ if __name__ == "__main__":
     success = main()
     
     if success:
-        print(f"\n🎯 Next steps:")
+        print(f"\n[TARGET] Next steps:")
         print("1. Integrate into your Decluttered.ai workflow")
         print("2. Test with real product images") 
         print("3. Monitor pricing accuracy vs actual sales")
         print("4. Consider adding more platforms (Mercari, OfferUp, etc.)")
     else:
-        print(f"\n🔧 Troubleshooting:")
+        print(f"\n[WRENCH] Troubleshooting:")
         print("- Check that both APIs started without errors")
         print("- Ensure you have internet connectivity")
         print("- For Facebook issues, try logging in manually in the browser")

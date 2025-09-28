@@ -12,16 +12,16 @@ def test_monitor():
     monitor._debug_mode = True  # Enable HTML saving for debugging
     
     # Manually check one conversation instead of looping
-    print("🚀 Starting manual test...")
+    print("[ROCKET] Starting manual test...")
     
     if not monitor.scraper.ensure_facebook_access():
-        print("❌ Facebook access failed")
+        print("[ERROR] Facebook access failed")
         return
     
     print("📬 Checking inbox once...")
     messages = monitor.check_facebook_inbox()
     
-    print(f"\n✅ Test complete. Found {len(messages)} messages")
+    print(f"\n[OK] Test complete. Found {len(messages)} messages")
     
     if messages:
         print("\n📋 Message details:")

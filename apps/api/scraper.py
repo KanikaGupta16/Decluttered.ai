@@ -35,10 +35,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 try:
     import google.generativeai as genai
     GEMINI_AVAILABLE = True
-    print("✅ Gemini AI library available")
+    print("[OK] Gemini AI library available")
 except ImportError:
     GEMINI_AVAILABLE = False
-    print("⚠️ Gemini AI not available - using basic string matching")
+    print("[WARNING] Gemini AI not available - using basic string matching")
 
 app = Flask(__name__)
 CORS(app)
@@ -50,12 +50,12 @@ class MarketplaceScraper:
         self.facebook_logged_in = False
         self.gemini_model = None
         self.setup_gemini()
-        print("🛒 Marketplace Scraper initialized")
+        print("[CART] Marketplace Scraper initialized")
     
     def setup_gemini(self):
         """Initialize Gemini AI for semantic product matching using .env GEMINI_API_KEY only"""
         if not GEMINI_AVAILABLE:
-            print("⚠️ Gemini library not available - install with: pip install google-generativeai")
+            print("[WARNING] Gemini library not available - install with: pip install google-generativeai")
             return
 
         load_dotenv()
@@ -69,26 +69,26 @@ class MarketplaceScraper:
                 
                 if test_response and test_response.text:
                     self.gemini_model = model
-                    print(f"✅ Gemini AI configured successfully: {key[:8]}...")
+                    print(f"[OK] Gemini AI configured successfully: {key[:8]}...")
                     return
                     
             except Exception as e:
-                print(f"⚠️ Gemini API key test failed {key[:8]}...: {e}")
-                print("💡 Make sure your GEMINI_API_KEY is valid in .env file")
+                print(f"[WARNING] Gemini API key test failed {key[:8]}...: {e}")
+                print("[BULB] Make sure your GEMINI_API_KEY is valid in .env file")
                 return
 
-        print("⚠️ No valid Gemini API key found - using basic string matching")
-        print("💡 Add GEMINI_API_KEY to .env file for better product matching")
+        print("[WARNING] No valid Gemini API key found - using basic string matching")
+        print("[BULB] Add GEMINI_API_KEY to .env file for better product matching")
     
     def start_browser(self, headless=False):
         """Start Chrome browser with optimal settings"""
         try:
-            print("🌐 Starting Chrome browser...")
+            print("[GLOBE] Starting Chrome browser...")
             
             # Create profile directory
             if not os.path.exists(self.profile_path):
                 os.makedirs(self.profile_path)
-                print(f"📁 Created profile directory: {self.profile_path}")
+                print(f"[FOLDER] Created profile directory: {self.profile_path}")
             
             options = Options()
             
@@ -123,11 +123,11 @@ class MarketplaceScraper:
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
             
-            print("✅ Chrome browser started successfully")
+            print("[OK] Chrome browser started successfully")
             return True
             
         except Exception as e:
-            print(f"❌ Failed to start browser: {e}")
+            print(f"[ERROR] Failed to start browser: {e}")
             return False
     
     def semantic_similarity(self, query_product: str, found_title: str) -> float:
@@ -170,7 +170,7 @@ Respond with ONLY the decimal number (e.g., 0.85):
                     return max(0.0, min(1.0, score))
             return SequenceMatcher(None, query_product.lower(), found_title.lower()).ratio()
         except Exception as e:
-            print(f"⚠️ Gemini similarity check failed: {e}")
+            print(f"[WARNING] Gemini similarity check failed: {e}")
             return SequenceMatcher(None, query_product.lower(), found_title.lower()).ratio()
     
     def normalize_condition(self, condition_text: str) -> str:
@@ -241,21 +241,21 @@ Respond with ONLY the decimal number (e.g., 0.85):
                 "login" not in current_url and 
                 "marketplace" in page_title):
                 
-                print("✅ Facebook login confirmed")
+                print("[OK] Facebook login confirmed")
                 self.facebook_logged_in = True
                 return True
             
-            print("🔐 Facebook login required")
+            print("[LOCK] Facebook login required")
             return False
             
         except Exception as e:
-            print(f"❌ Error checking Facebook login: {e}")
+            print(f"[ERROR] Error checking Facebook login: {e}")
             return False
     
     def facebook_login_flow(self) -> bool:
         """Interactive Facebook login process"""
         try:
-            print("\n🔐 FACEBOOK LOGIN REQUIRED")
+            print("\n[LOCK] FACEBOOK LOGIN REQUIRED")
             print("=" * 60)
             print("Facebook Marketplace requires authentication to view listings.")
             print("This is a ONE-TIME setup - your login will be saved.")
@@ -285,15 +285,15 @@ Respond with ONLY the decimal number (e.g., 0.85):
                     return True
                 
                 if attempt < 2:
-                    print("⚠️ Login not detected, please check the browser window")
+                    print("[WARNING] Login not detected, please check the browser window")
                     time.sleep(3)
             
-            print("❌ Facebook login verification failed")
+            print("[ERROR] Facebook login verification failed")
             print("Please ensure you're fully logged in and try again")
             return False
             
         except Exception as e:
-            print(f"❌ Facebook login process failed: {e}")
+            print(f"[ERROR] Facebook login process failed: {e}")
             return False
     
     def ensure_facebook_access(self) -> bool:
@@ -315,11 +315,11 @@ Respond with ONLY the decimal number (e.g., 0.85):
 
         # Ensure Facebook access
         if not self.ensure_facebook_access():
-            print("❌ Facebook access failed - skipping Facebook scraping")
+            print("[ERROR] Facebook access failed - skipping Facebook scraping")
             return results
 
         try:
-            print(f"🛒 Scraping Facebook Marketplace: '{query}' (radius: 160 km)")
+            print(f"[CART] Scraping Facebook Marketplace: '{query}' (radius: 160 km)")
 
             # Use expanded radius in km
             search_query = urllib.parse.quote(query)
@@ -341,13 +341,13 @@ Respond with ONLY the decimal number (e.g., 0.85):
                     found_listings = self.driver.find_elements(By.CSS_SELECTOR, selector)
                     if found_listings:
                         listings = found_listings
-                        print(f"📦 Found {len(listings)} Facebook listings with: {selector}")
+                        print(f"[PACKAGE] Found {len(listings)} Facebook listings with: {selector}")
                         break
                 except:
                     continue
 
             if not listings:
-                print("⚠️ No Facebook listings found")
+                print("[WARNING] No Facebook listings found")
                 return results
 
             # Collect candidate items
@@ -426,7 +426,7 @@ Respond with ONLY the decimal number (e.g., 0.85):
                         'raw_price_text': price_text
                     })
                 except Exception as e:
-                    print(f"   ⚠️ Error processing Facebook listing {i}: {e}")
+                    print(f"   [WARNING] Error processing Facebook listing {i}: {e}")
                     continue
 
             # Batch Gemini filtering
@@ -450,7 +450,7 @@ Candidates:
                     while len(scores) < len(candidates):
                         scores.append(0.0)
                 except Exception as e:
-                    print(f"⚠️ Gemini batch filtering failed: {e}")
+                    print(f"[WARNING] Gemini batch filtering failed: {e}")
                     scores = [self.semantic_similarity(query, item['title']) for item in candidates]
             else:
                 scores = [self.semantic_similarity(query, item['title']) for item in candidates]
@@ -460,12 +460,12 @@ Candidates:
                 if sim >= 0.7:
                     item['similarity_score'] = sim
                     results.append(item)
-                    print(f"   ✅ FB: ${item['price']} - {item['title'][:40]}... (sim: {sim:.2f})")
+                    print(f"   [OK] FB: ${item['price']} - {item['title'][:40]}... (sim: {sim:.2f})")
 
-            print(f"🛒 Facebook Marketplace: {len(results)} highly relevant listings found (Gemini batch filtered)")
+            print(f"[CART] Facebook Marketplace: {len(results)} highly relevant listings found (Gemini batch filtered)")
 
         except Exception as e:
-            print(f"❌ Facebook scraping failed: {e}")
+            print(f"[ERROR] Facebook scraping failed: {e}")
 
         return results
     
@@ -502,7 +502,7 @@ Candidates:
                     EC.presence_of_element_located((By.CSS_SELECTOR, ".s-item"))
                 )
             except TimeoutException:
-                print("⚠️ eBay results did not load in time")
+                print("[WARNING] eBay results did not load in time")
             
             # Find listings using your provided HTML structure
             listing_selectors = [
@@ -517,13 +517,13 @@ Candidates:
                     found_listings = self.driver.find_elements(By.CSS_SELECTOR, selector)
                     if found_listings and len(found_listings) > 1:  # More than just the header
                         listings = found_listings
-                        print(f"📦 Found {len(listings)} eBay listings with: {selector}")
+                        print(f"[PACKAGE] Found {len(listings)} eBay listings with: {selector}")
                         break
                 except:
                     continue
             
             if not listings:
-                print("⚠️ No eBay listings found")
+                print("[WARNING] No eBay listings found")
                 return results
             
             # Process listings (skip first - often an ad)
@@ -639,16 +639,16 @@ Candidates:
                             'raw_price_text': price_text
                         }
                         results.append(result)
-                        print(f"   ✅ eBay: ${price} - {title_text[:40]}... (sim: {similarity:.2f})")
+                        print(f"   [OK] eBay: ${price} - {title_text[:40]}... (sim: {similarity:.2f})")
                 
                 except Exception as e:
-                    print(f"   ⚠️ Error processing eBay listing {i}: {e}")
+                    print(f"   [WARNING] Error processing eBay listing {i}: {e}")
                     continue
             
             print(f"🔨 eBay: {len(results)} matching sold listings found")
             
         except Exception as e:
-            print(f"❌ eBay scraping failed: {e}")
+            print(f"[ERROR] eBay scraping failed: {e}")
         
         return results
     
@@ -780,7 +780,7 @@ Candidates:
             }
         
         except Exception as e:
-            print(f"❌ Search failed: {e}")
+            print(f"[ERROR] Search failed: {e}")
             return {
                 'error': f'Search failed: {str(e)}',
                 'query': query,
@@ -793,7 +793,7 @@ Candidates:
         try:
             from facebook_monitor import FacebookMessageMonitor
             
-            print("🚀 Starting Facebook message monitoring...")
+            print("[ROCKET] Starting Facebook message monitoring...")
             
             monitor = FacebookMessageMonitor()
             monitor.scraper = self  # Use this scraper's browser session
@@ -803,11 +803,11 @@ Candidates:
             monitor_thread.daemon = True  # Dies when main program exits
             monitor_thread.start()
             
-            print("✅ Facebook message monitor started in background")
+            print("[OK] Facebook message monitor started in background")
             return monitor
             
         except Exception as e:
-            print(f"❌ Failed to start message monitor: {e}")
+            print(f"[ERROR] Failed to start message monitor: {e}")
             return None
     
     def close(self):
@@ -957,7 +957,7 @@ def get_prices():
         })
     
     except Exception as e:
-        print(f"❌ API error: {e}")
+        print(f"[ERROR] API error: {e}")
         return jsonify({
             'ok': False,
             'error_code': 'INTERNAL_ERROR',
@@ -1030,23 +1030,23 @@ def test_endpoint():
 # === MAIN ===
 
 if __name__ == '__main__':
-    print("🛒 Marketplace Price Scraper API v2.0")
+    print("[CART] Marketplace Price Scraper API v2.0")
     print("=" * 50)
-    print("🌐 Server: http://localhost:3002")
-    print("📊 Prices: POST /api/prices")
-    print("🔐 FB Login: POST /api/facebook/login")
+    print("[GLOBE] Server: http://localhost:3002")
+    print("[CHART] Prices: POST /api/prices")
+    print("[LOCK] FB Login: POST /api/facebook/login")
     print("🧪 Test: GET /api/test")
     print("❤️  Health: GET /health")
     print()
-    print("✨ Features:")
+    print("[SPARKLES] Features:")
     print("  - Facebook Marketplace scraping (login required)")
     print("  - eBay sold listings with accurate selectors")
     print("  - Semantic product matching with Gemini AI")
     print("  - Comprehensive price statistics")
     print("  - Cookie-based login persistence")
     print()
-    print("⚠️  Setup: Run Facebook login on first use")
-    print("🚀 Ready for production!")
+    print("[WARNING]  Setup: Run Facebook login on first use")
+    print("[ROCKET] Ready for production!")
     
     try:
         app.run(debug=True, host='0.0.0.0', port=3002)

@@ -1,0 +1,42 @@
+# Decluttered.AI Object Detection Pipeline Requirements
+
+# Core Computer Vision
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# YOLO Model
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Database & API
+supabase>=2.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Web Framework (for API servers)
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# Selenium for Web Automation
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+
+# AI & Language Models
+google-generativeai>=0.3.0
+
+# Data Processing
+statistics
+json
+uuid
+base64
+tempfile
+datetime
+typing
+
+# File & System Operations
+glob
+os
+sys
+time
+re

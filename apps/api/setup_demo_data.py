@@ -19,11 +19,11 @@ def setup_demo_data():
     key = os.getenv('SUPABASE_ANON_KEY')
     
     if not url or not key:
-        print("❌ Missing Supabase credentials")
+        print("[ERROR] Missing Supabase credentials")
         return
     
     supabase = create_client(url, key)
-    print("✅ Connected to Supabase")
+    print("[OK] Connected to Supabase")
     
     # Sample analytics data
     demo_analytics = {
@@ -186,30 +186,30 @@ def setup_demo_data():
     
     try:
         # Insert analytics cache
-        print("📊 Adding analytics data...")
+        print("[CHART] Adding analytics data...")
         result = supabase.table('analytics_cache').upsert(demo_analytics, on_conflict='related_user,cache_type').execute()
-        print(f"✅ Analytics data added: {len(result.data)} records")
+        print(f"[OK] Analytics data added: {len(result.data)} records")
         
         # Insert communications
-        print("📧 Adding communication records...")
+        print("[EMAIL] Adding communication records...")
         result = supabase.table('agent_communications').insert(sample_communications).execute()
-        print(f"✅ Communications added: {len(result.data)} records")
+        print(f"[OK] Communications added: {len(result.data)} records")
         
         # Insert voice interactions
         print("🎤 Adding voice interactions...")
         result = supabase.table('voice_interactions').insert(sample_voice_interactions).execute()
-        print(f"✅ Voice interactions added: {len(result.data)} records")
+        print(f"[OK] Voice interactions added: {len(result.data)} records")
         
         # Insert market intelligence
-        print("🧠 Adding market intelligence...")
+        print("[BRAIN] Adding market intelligence...")
         result = supabase.table('agent_market_intelligence').insert(market_intelligence).execute()
-        print(f"✅ Market intelligence added: {len(result.data)} records")
+        print(f"[OK] Market intelligence added: {len(result.data)} records")
         
         print("\n🎉 Demo data setup complete!")
-        print("🚀 Your API now has rich analytics data to showcase!")
+        print("[ROCKET] Your API now has rich analytics data to showcase!")
         
     except Exception as e:
-        print(f"❌ Error setting up demo data: {e}")
+        print(f"[ERROR] Error setting up demo data: {e}")
 
 if __name__ == "__main__":
     setup_demo_data()

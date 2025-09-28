@@ -1,0 +1,36 @@
+DECLUTTERED.AI - COMPLETE PIPELINE REPORT
+==================================================
+Timestamp: 2025-09-28T14:03:56.529995
+Image: 1759082636_dem.jpg
+Objects detected: 5
+Total estimated value: $377.50
+
+OBJECT 1: laptop
+------------------------------
+  Identified as: Buy 14-inch MacBook Pro
+  Market research: 1 comparables
+  Average market price: $400.0
+  Estimated value: $368.0
+  Facebook listing: Failed
+  eBay listing: Failed
+
+OBJECT 2: mouse
+------------------------------
+  Identified as: HP X500 USB Wired Mouse
+  Market research: 6 comparables
+  Average market price: $11.7
+  Estimated value: $9.5
+  Facebook listing: Failed
+  eBay listing: Failed
+
+OBJECT 3: bottle
+------------------------------
+  Status: SKIPPED - not_recognized_as_product
+
+OBJECT 4: refrigerator
+------------------------------
+  Status: SKIPPED - not_recognized_as_product
+
+OBJECT 5: remote
+------------------------------
+  Status: SKIPPED - not_recognized_as_product

@@ -10,7 +10,6 @@ import {
   Trash2,
   DollarSign,
   Tag,
-  Clock,
   Upload,
   Globe,
   CheckCircle,
@@ -26,7 +25,7 @@ interface QueuedItem {
   tags: string[];
   status: 'ready' | 'posting' | 'posted' | 'error';
   platforms: string[];
-  thumbnail: string;
+  croppedImageUrl: string;
   timestamp: number;
   frameImage: string;
 }
@@ -146,7 +145,7 @@ const PostQueue = ({ items, onBack, onPostComplete }: PostQueueProps) => {
           <div className="bg-gradient-to-br from-white to-[#F6EFD9]/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-[#F6EFD9]/30 shadow-lg">
             <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <h3 className="text-sm sm:text-lg font-semibold text-[#1A6A6A]">Posting</h3>
             </div>
